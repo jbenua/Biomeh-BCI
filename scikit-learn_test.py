@@ -2,43 +2,53 @@ __author__ = 'jbenua'
 
 from sklearn import svm
 from sklearn.neighbors.nearest_centroid import NearestCentroid
-import numpy as np
 from sklearn.svm import NuSVC
+from sklearn.linear_model import SGDClassifier
+from sklearn import tree
 
+
+def d_tree(X, y, test):
+    clf = tree.DecisionTreeClassifier()
+    clf = clf.fit(X, y)
+    print "tree:", clf.predict(test)
+
+def gradient(X, y, test):
+    clf = SGDClassifier(loss="hinge", penalty="l2", shuffle=True)
+    clf.fit(X, y)
+    print "gradient:", clf.predict(test)
 
 def sup_vm(X, y, test):
     clf = svm.SVC()
     clf.fit(X, y)
-    print "svm:"
-    print test, clf.predict(test)
+    print "svm:", clf.predict(test)
 
 def nu_svc(X, y, test):
     clf = NuSVC()
     clf.fit(X, y)
-    print "nu_svc:"
-    print test, clf.predict(test)
+    print "nu_svc:", clf.predict(test)
 
 
 def svr(X, y, test):
     clf = svm.SVR()
     clf.fit(X, y)
-    print "svr:"
-    print test, clf.predict(test)
+    print "svr:", clf.predict(test)
 
 
 def nn_centroid(X, y, test):
     clf = NearestCentroid()
     clf.fit(X, y)
-    print "nn_centroid:"
-    print test, clf.predict(test)
+    print "nn_centroid:", clf.predict(test)
 
 
 def try_methods(X, Y, test):
+    print "X =", X, "\nY =", Y, "\ntest =", test, "\n"
     sup_vm(X, Y, test)
     nu_svc(X, Y, test)
     svr(X, Y, test)
     nn_centroid(X, Y, test)
-
+    gradient(X, Y, test)
+    d_tree(X, Y, test)
+    print "\n"
 
 if __name__ == "__main__":
     X1 = [[0, 0], [0.6, 0.3], [1, 1], [2, 2]]
@@ -53,8 +63,8 @@ if __name__ == "__main__":
     Y3 = [0, 0, 1, 1, 0, 0, 0]
     tx3 = [[1.5, 1.5]]  # middle
 
-    X = np.array([[0, 0], [5, 5], [1, 1], [0.5, 0.5]])
-    y = np.array([0, 2, 1, 1])
+    X = [[0, 0], [5, 5], [1, 1], [0.5, 0.5]]
+    y = [0, 2, 1, 1]
     test1 = [[1, 1]]
     test2 = [[2, 2]]
 
