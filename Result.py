@@ -17,6 +17,14 @@ class Result(object):
         self.btn = Button(self.tags_out, text="Save changes", command=self.upd_tags)
         self.label1 = Label(self.tags_out, text="(we can be wrong sometimes,\nso you can edit these tags)")
         self.design()
+        self.user.print_all_info()
+        tags = self.user.detect(self.db)
+        s = ""
+        for t in tags:
+            s += t + ", "
+        s = s[:s.rfind(",")]
+        self.tag_line.insert(0, s)
+        self.tags_out.pack()
 
     def design(self):
         self.root.geometry('250x250')
@@ -24,26 +32,6 @@ class Result(object):
         self.tag_line.grid(row=1, column=0, padx=10, pady=20)  # WTF???
         self.label1.grid(row=2, column=0, padx=10, pady=10)
         self.btn.grid(row=3, column=0, padx=10)
-
-    def known_user(self):
-        #
-        self.user.print_all_info()
-        #
-        # detect the mood, fill taglist with appropriate ones
-        self.db.connect()
-        t_res = self.db.execute_sql("SELECT tag FROM tags")  # + WHERE id= N
-        tags = []
-        for i in t_res:
-            l = str(i).split("'")
-            tags.append(l[1])
-        self.db.close()
-
-        s = ""
-        for t in tags:
-            s += t + ", "
-        s = s[:s.rfind(",")]
-        self.tag_line.insert(0, s)
-        self.tags_out.pack()
 
     def upd_tags(self):
         s = self.tag_line.get().split(", ")

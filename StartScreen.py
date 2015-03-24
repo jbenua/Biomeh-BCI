@@ -53,7 +53,6 @@ class StartScreen(object):
                 r = Result(self.root, self.db, self.user)
                 # better hide
                 self.start_frame.destroy()
-                r.known_user()
             else:
                 self.alertup.place(x=70, y=42)
         else:

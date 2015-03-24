@@ -3,7 +3,6 @@ __author__ = 'jbenua'
 from sklearn import svm
 from sklearn.neighbors.nearest_centroid import NearestCentroid
 from sklearn.svm import NuSVC
-from sklearn.linear_model import SGDClassifier
 from sklearn import tree
 
 
@@ -11,11 +10,6 @@ def d_tree(X, y, test):
     clf = tree.DecisionTreeClassifier()
     clf = clf.fit(X, y)
     print "tree:", clf.predict(test)
-
-def gradient(X, y, test):
-    clf = SGDClassifier(loss="hinge", penalty="l2", shuffle=True)
-    clf.fit(X, y)
-    print "gradient:", clf.predict(test)
 
 def sup_vm(X, y, test):
     clf = svm.SVC()
@@ -27,13 +21,6 @@ def nu_svc(X, y, test):
     clf.fit(X, y)
     print "nu_svc:", clf.predict(test)
 
-
-def svr(X, y, test):
-    clf = svm.SVR()
-    clf.fit(X, y)
-    print "svr:", clf.predict(test)
-
-
 def nn_centroid(X, y, test):
     clf = NearestCentroid()
     clf.fit(X, y)
@@ -41,12 +28,12 @@ def nn_centroid(X, y, test):
 
 
 def try_methods(X, Y, test):
+    # try with multiclass data
+
     print "X =", X, "\nY =", Y, "\ntest =", test, "\n"
     sup_vm(X, Y, test)
     nu_svc(X, Y, test)
-    svr(X, Y, test)
     nn_centroid(X, Y, test)
-    gradient(X, Y, test)
     d_tree(X, Y, test)
     print "\n"
 
