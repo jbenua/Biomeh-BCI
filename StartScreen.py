@@ -37,7 +37,6 @@ class StartScreen(object):
         self.nu.grid(row=1, column=0, columnspan=3, padx=10, pady=15, sticky="nw")
         self.start_btn.grid(row=0, column=2, rowspan=2, pady=15, sticky="nsew")
 
-    # hide, not destroy
     def start(self):
         u = self.combo.get()
         p = self.passwd.get()

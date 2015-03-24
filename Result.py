@@ -2,8 +2,6 @@ __author__ = 'user'
 import Tkinter as TkI
 from ttk import *
 
-# detect tags
-
 
 class Result(object):
     def __init__(self, root, db, user):
@@ -13,7 +11,7 @@ class Result(object):
         self.tags_out = Frame(root)
         # self.tag_line = Text(self.tags_out, wrap=WORD, width=7)
         self.tag_line = Entry(self.tags_out, width=35)
-        self.label = Label(self.tags_out, text="We detected, that you feel much like...")
+        self.label = Label(self.tags_out, text="It's detected, that you feel much like...")
         self.btn = Button(self.tags_out, text="Save changes", command=self.upd_tags)
         self.label1 = Label(self.tags_out, text="(we can be wrong sometimes,\nso you can edit these tags)")
         self.design()

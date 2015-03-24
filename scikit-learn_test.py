@@ -29,7 +29,6 @@ def nn_centroid(X, y, test):
 
 def try_methods(X, Y, test):
     # try with multiclass data
-
     print "X =", X, "\nY =", Y, "\ntest =", test, "\n"
     sup_vm(X, Y, test)
     nu_svc(X, Y, test)

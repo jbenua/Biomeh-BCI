@@ -49,7 +49,6 @@ class User(object):
     def detect(self, db):
         # test
         self.current_session_raw = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        #
         if self.current_session_raw!=[]:
             # maybe change the method
             clf = svm.SVC()
