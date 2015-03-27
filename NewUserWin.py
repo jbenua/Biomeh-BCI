@@ -1,4 +1,4 @@
-__author__ = 'user'
+__author__ = 'jbenua'
 
 from Tkinter import *
 import Tkinter as TkI
@@ -6,10 +6,10 @@ from ttk import *
 
 
 class NewUserWin(object):
-    def __init__(self, db, user, combo):
+    def __init__(self, user, combo):
         self.combo = combo
         self.user = user
-        self.db = db
+        self.db = user.db
         self.nuser = Toplevel()
         self.l1 = Label(self.nuser, text="Enter the username:")
         self.l2 = Label(self.nuser, text="Enter the password:")

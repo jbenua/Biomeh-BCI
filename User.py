@@ -1,19 +1,24 @@
 __author__ = 'user'
 from emotiv import Emotiv
 from sklearn import svm
+from peewee import *
 
 class User(object):
     def __init__(self):
         self.userid = -1
         self.username = ""
         self.current_session_raw = []
+        self.current_session_id = -1
         self.prev_tags = []
         self.prev_data = []
+        self.electrodes = ["f3", "fc6", "p7", "t8", "f7", "f8", "t7", "p8", "af4", "f4", "af3", "o2", "o1", "fc5", "x", "y", "unknown"]
+        self.db = MySQLDatabase('headset', host='localhost', user='jbenua', passwd='jbenua')
 
     def print_all_info(self):
         print "id: ", self.userid
         print "name: " + self.username
         print "current raw: ", self.current_session_raw
+        print "current raw_id:", self.current_session_id
         print "previous tags: ", self.prev_tags
         print "previous sessions: ", self.prev_data
 
@@ -21,11 +26,30 @@ class User(object):
         try:
             a = Emotiv()
             self.current_session_raw = a.setupWin()
+            self.get_raw_id()
         except Exception as err:
             a.device.close()
             print "Error reading raw data! "
             for t in err.args:
                 print t
+
+    def get_raw_id(self):
+        s = ""
+        i = 0
+        while i < len(self.electrodes):
+            s += self.electrodes[i]+"='"+str(self.current_session_raw[i])+"' AND "
+            i += 1
+        s = s[:s.rfind("AND ")]
+        res = self.db.execute_sql("SELECT id FROM raw WHERE " + s)
+        if res.rowcount == 0:
+            temp = str(tuple([str(i) for i in self.current_session_raw]))
+            sq = "INSERT INTO raw (f3, fc6, p7, t8, f7, f8, t7, p8, af4, f4, af3, o2, o1," \
+                 " fc5, x, y, unknown) VALUES " + temp
+            self.db.execute_sql(sq)
+            res = self.db.execute_sql("SELECT LAST_INSERT_ID();")
+            print "it's a new raw"
+        for i in res:
+            self.current_session_id=i[0]
 
     def fill_info(self, db, name, pswd):
         self.username = name
@@ -48,7 +72,9 @@ class User(object):
 
     def detect(self, db):
         # test
-        self.current_session_raw = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        # self.current_session_raw = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        # self.get_raw_id()
+        #
         if self.current_session_raw!=[]:
             # maybe change the method
             clf = svm.SVC()

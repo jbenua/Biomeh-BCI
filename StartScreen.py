@@ -1,17 +1,17 @@
-__author__ = 'user'
+__author__ = 'jbenua'
+
 from Tkinter import *
 import Tkinter as TkI
 from ttk import *
-
 from NewUserWin import NewUserWin
 from Result import Result
 
 
 class StartScreen(object):
-    def __init__(self, root, db, user):
+    def __init__(self, root, user):
         self.user = user
         self.root = root
-        self.db = db
+        self.db = user.db
         self.db.connect()
         u_res = self.db.execute_sql("SELECT username FROM users")
         list1 = []
@@ -26,9 +26,12 @@ class StartScreen(object):
         self.start_btn = Button(self.start_frame, text="START", command=self.start)
         self.alertu = TkI.Label(self.start_frame, text="choose user or create a new one", fg="red")
         self.alertup = TkI.Label(self.start_frame, text="incorrect pair 'login-password'", fg="red")
+        self.loading = TkI.Label(self.start_frame, text="reading and analysing data...", fg='green')
+        self.design()
         self.start_frame.pack()
 
     def design(self):
+        Style().map('TButton', background=[('pressed',  'green')], text=[('pressed', 'loading')])
         self.root.geometry('437x117')
         self.root.resizable(False, False)
         self.combo.set("Select user...")
@@ -49,7 +52,8 @@ class StartScreen(object):
             if res.rowcount == 1:
                 self.user.fill_info(self.db, u, p)
                 self.db.close()
-                r = Result(self.root, self.db, self.user)
+                self.user.read_data()
+                r = Result(self.root, self.user)
                 # better hide
                 self.start_frame.destroy()
             else:
@@ -59,5 +63,5 @@ class StartScreen(object):
             self.alertu.place(x=70, y=42)
 
     def new_u(self):
-        a = NewUserWin(self.db, self.user, self.combo)
+        a = NewUserWin(self.user, self.combo)
         a.nuser.mainloop()
