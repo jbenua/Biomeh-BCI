@@ -60,4 +60,4 @@ class Result(object):
     def exit(self):
         if not self.tags and self.tags is not ['Nothing was read']:
             self.save()
-        self.tags_out.destroy()
+        self.root.quit()

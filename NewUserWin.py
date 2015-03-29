@@ -11,6 +11,7 @@ class NewUserWin(object):
         self.user = user
         self.db = user.db
         self.nuser = Toplevel()
+        self.nuser.iconbitmap(bitmap="Gameicon.ico")
         self.l1 = Label(self.nuser, text="Enter the username:")
         self.l2 = Label(self.nuser, text="Enter the password:")
         self.l3 = Label(self.nuser, text="Re-enter the password:")
