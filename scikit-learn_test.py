@@ -18,10 +18,16 @@ def sup_vm(X, y, test):
     print "svm:", clf.predict(test)
 
 
-def nu_svc(X, y, test):
-    clf = NuSVC()
+def nu_svc9(X, y, test):
+    clf = NuSVC(nu=0.9999999999999999)
     clf.fit(X, y)
-    print "nu_svc:", clf.predict(test)
+    print "nu_svc(0.9...9):", clf.predict(test)
+
+
+def nu_svc1(X, y, test):
+    clf = NuSVC(nu=0.000000000000001)
+    clf.fit(X, y)
+    print "nu_svc(0.0....1):", clf.predict(test)
 
 
 def nn_centroid(X, y, test):
@@ -33,41 +39,14 @@ def nn_centroid(X, y, test):
 def try_methods(X, Y, test):
     print "X =", X, "\nY =", Y, "\ntest =", test, "\n"
     sup_vm(X, Y, test)
-    nu_svc(X, Y, test)
+    nu_svc1(X, Y, test)
+    nu_svc9(X, Y, test)
     nn_centroid(X, Y, test)
     d_tree(X, Y, test)
     print "\n"
 
 if __name__ == "__main__":
-    X1 = [[0, 0], [0.6, 0.3], [1, 1], [2, 2]]
-    Y1 = [0, 0, 1, 1]
-    tx1 = [[1.3, 0.7]]
-
-    X2 = [[0, 0], [0.6, 0.3], [1, 1], [2, 2], [0, 2], [2, 3]]
-    Y2 = [0, 0, 1, 1, 0, 0]
-    tx2 = [[1.3, 0.7]]
-
-    X3 = [[0, 0], [0.6, 0.3], [1, 1], [2, 2], [0, 2], [2, 3], [1.3, 0.7]]
-    Y3 = [0, 0, 1, 1, 0, 0, 0]
-    tx3 = [[1.5, 1.5]]
-
-    X = [[0, 0], [5, 5], [1, 1], [0.5, 0.5]]
-    y = [0, 2, 1, 1]
-    test1 = [[1, 1]]
-    test2 = [[2, 2]]
-
-    X4 = [[0, 0], [0, 0], [0, 0]]
-    Y4 = [0, 1, 2]
-    tx4 = [[0, 0]]
-
-    X5 = [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
-    Y5 = [3, 1]
-    tx5 = [[1672, 7992, 8952, 8059, 8059, 8009, 7779, 9235, 7872, 8227, 8001, 3, 8437, 1680, 7351, 8653, 9063]]
-
-    try_methods(X1, Y1, tx1)
-    try_methods(X2, Y2, tx2)
-    try_methods(X, y, test1)
-    try_methods(X, y, test2)
-    try_methods(X3, Y3, tx3)
-    try_methods(X4, Y4, tx4)
-    # need a multiclass method
+    X1 = [[0, 0], [0, 2], [2, 2], [2, 0]]
+    Y3 = [0, 1, 2, 3]
+    tx3 = [[1.000000000000001, 1.000000000000001]]
+    try_methods(X1, Y3, tx3)

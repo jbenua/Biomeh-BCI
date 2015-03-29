@@ -58,6 +58,6 @@ class Result(object):
                     self.db.execute_sql(ins)
 
     def exit(self):
-        if self.tags != [] and self.tags !=['Nothing was read']:
+        if not self.tags and self.tags is not ['Nothing was read']:
             self.save()
         self.tags_out.destroy()
