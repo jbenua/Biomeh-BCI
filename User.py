@@ -3,6 +3,61 @@ from emotiv import Emotiv
 from sklearn import svm
 from peewee import *
 
+db = MySQLDatabase('headset', host='localhost', user='jbenua', passwd='jbenua')
+
+class users(Model):
+    id = IntegerField()
+    username = CharField()
+    passwd = CharField()
+
+    class Meta:
+        database = db
+
+
+class tags(Model):
+    id = IntegerField()
+    tag = TextField()
+
+    class Meta:
+        database = db
+
+
+class raw(Model):
+    id = IntegerField()
+    f3 = IntegerField()
+    fc6 = IntegerField()
+    p7 = IntegerField()
+    t8 = IntegerField()
+    f7 = IntegerField()
+    f8 = IntegerField()
+    t7 = IntegerField()
+    p8 = IntegerField()
+    af4 = IntegerField()
+    f4 = IntegerField()
+    af3 = IntegerField()
+    o2 = IntegerField()
+    o1 = IntegerField()
+    fc5 = IntegerField()
+    x = IntegerField()
+    y = IntegerField()
+    unknown = IntegerField()
+
+    class Meta:
+        database = db
+
+
+class sessions(Model):
+    id = IntegerField()
+    raw_id = IntegerField()
+    tag_id = IntegerField()
+    user_id = IntegerField()
+
+    class Meta:
+        database = db
+
+db.create_tables([users, raw, tags, sessions], safe=True)
+
+
 class User(object):
     def __init__(self):
         self.userid = -1
@@ -11,8 +66,7 @@ class User(object):
         self.current_session_id = -1
         self.prev_tags = []
         self.prev_data = []
-        self.electrodes = ["f3", "fc6", "p7", "t8", "f7", "f8", "t7", "p8", "af4", "f4", "af3", "o2", "o1", "fc5", "x", "y", "unknown"]
-        self.db = MySQLDatabase('headset', host='localhost', user='jbenua', passwd='jbenua')
+        self.db = db
 
     def print_all_info(self):
         print "id: ", self.userid
@@ -26,56 +80,84 @@ class User(object):
         try:
             a = Emotiv()
             self.current_session_raw = a.setupWin()
-            self.get_raw_id()
-        except Exception as err:
             a.device.close()
+            self.get_raw_id()
+            return True
+        except Exception as err:
             print "Error reading raw data! "
             for t in err.args:
                 print t
+            return False
 
     def get_raw_id(self):
-        s = ""
-        i = 0
-        while i < len(self.electrodes):
-            s += self.electrodes[i]+"='"+str(self.current_session_raw[i])+"' AND "
-            i += 1
-        s = s[:s.rfind("AND ")]
-        res = self.db.execute_sql("SELECT id FROM raw WHERE " + s)
-        if res.rowcount == 0:
-            temp = str(tuple([str(i) for i in self.current_session_raw]))
-            sq = "INSERT INTO raw (f3, fc6, p7, t8, f7, f8, t7, p8, af4, f4, af3, o2, o1," \
-                 " fc5, x, y, unknown) VALUES " + temp
-            self.db.execute_sql(sq)
-            res = self.db.execute_sql("SELECT LAST_INSERT_ID();")
+        try:
+            res = raw.get(raw.f3 == self.current_session_raw[0],
+                          raw.fc6 == self.current_session_raw[1],
+                          raw.p7 == self.current_session_raw[2],
+                          raw.t8 == self.current_session_raw[3],
+                          raw.f7 == self.current_session_raw[4],
+                          raw.f8 == self.current_session_raw[5],
+                          raw.t7 == self.current_session_raw[6],
+                          raw.p8 == self.current_session_raw[7],
+                          raw.af4 == self.current_session_raw[8],
+                          raw.f4 == self.current_session_raw[9],
+                          raw.af3 == self.current_session_raw[10],
+                          raw.o2 == self.current_session_raw[11],
+                          raw.o1 == self.current_session_raw[12],
+                          raw.fc5 == self.current_session_raw[13],
+                          raw.x == self.current_session_raw[14],
+                          raw.y == self.current_session_raw[15],
+                          raw.unknown == self.current_session_raw[16])
+        except raw.DoesNotExist:
+            res = raw.create(f3=self.current_session_raw[0],
+                             fc6=self.current_session_raw[1],
+                             p7=self.current_session_raw[2],
+                             t8=self.current_session_raw[3],
+                             f7=self.current_session_raw[4],
+                             f8=self.current_session_raw[5],
+                             t7=self.current_session_raw[6],
+                             p8=self.current_session_raw[7],
+                             af4=self.current_session_raw[8],
+                             f4=self.current_session_raw[9],
+                             af3=self.current_session_raw[10],
+                             o2=self.current_session_raw[11],
+                             o1=self.current_session_raw[12],
+                             fc5=self.current_session_raw[13],
+                             x=self.current_session_raw[14],
+                             y=self.current_session_raw[15],
+                             unknown=self.current_session_raw[16])
             print "it's a new raw"
-        for i in res:
-            self.current_session_id=i[0]
+        finally:
+            self.current_session_id = res.id
 
-    def fill_info(self, db, name, pswd):
+    def fill_info(self, name, pswd):
+        db.connect()
         self.username = name
-        get_id = "SELECT id FROM users WHERE username='" + self.username + "' AND passwd='" + pswd+"'"
-        u_id = db.execute_sql(get_id)
-        for i in u_id:
-            self.userid = i[0]
-        get_tags = "SELECT tag_id, raw_id FROM sessions WHERE user_id = '" + str(self.userid) + "'"
-        tags = db.execute_sql(get_tags)
-        for i in tags:
-            get_raw_t = "SELECT f3, fc6, p7, t8, f7, f8, t7, p8, af4, f4, af3, o2, o1, fc5, x, y, unknown from raw " +\
-                "WHERE id = '" + str(i[1]) + "'"
-            each_tag = db.execute_sql(get_raw_t)
-            temp = []
-            for j in each_tag:
-                for a in j:
-                    temp.append(a)
-            self.prev_data.append(temp)
-            self.prev_tags.append(i[0])
+        get_id = users.get(users.username == self.username, users.passwd == pswd)
+        self.userid = get_id.id
+        try:
+            get_tags_and_raw = sessions.select(sessions.tag_id, sessions.raw_id).where(sessions.user_id == self.userid)
+            for i in get_tags_and_raw:
+                get_raw = raw.select(raw.f3, raw.fc6, raw.p7, raw.t8, raw.f7,
+                                     raw.f8, raw.t7, raw.p8, raw.af4, raw.f4,
+                                     raw.af3, raw.o2, raw.o1, raw.fc5, raw.x,
+                                     raw.y, raw.unknown).where(raw.id == i.raw_id)
+                for j in get_raw:
+                    self.prev_data.append([j.f3, j.f3, j.fc6, j.p7, j.t8, j.f7,
+                                           j.f8, j.t7, j.p8, j.af4, j.f4, j.af3,
+                                           j.o2, j.o1, j.fc5, j.x, j.y, j.unknown])
+                self.prev_tags.append(i.tag_id)
+        except sessions.DoesNotExist:
+            print "no previous data found"
+        finally:
+            db.close()
 
-    def detect(self, db):
+    def detect(self):
         # test
         # self.current_session_raw = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         # self.get_raw_id()
         #
-        if self.current_session_raw!=[]:
+        if not self.current_session_raw:
             # maybe change the method
             clf = svm.SVC()
             clf.fit(self.prev_data, self.prev_tags)
@@ -84,11 +166,11 @@ class User(object):
             temp = []
             db.connect()
             for i in a:
-                get_tags = "SELECT tag FROM tags WHERE id = '" + str(i) + "'"
-                res = db.execute_sql(get_tags)
-                for j in res:
-                    l = str(j).split("'")
-                    temp.append(l[1])
+                try:
+                    get_tags = tags.get(tags.id == i).tag
+                    temp.append(get_tags)
+                except tags.DoesNotExist:
+                    print 'nothing was found'
             db.close()
             return temp
         else:

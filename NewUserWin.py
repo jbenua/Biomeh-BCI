@@ -3,13 +3,12 @@ __author__ = 'jbenua'
 from Tkinter import *
 import Tkinter as TkI
 from ttk import *
-
+import User
 
 class NewUserWin(object):
     def __init__(self, user, combo):
         self.combo = combo
         self.user = user
-        self.db = user.db
         self.nuser = Toplevel()
         self.nuser.iconbitmap(bitmap="Gameicon.ico")
         self.l1 = Label(self.nuser, text="Enter the username:")
@@ -42,20 +41,19 @@ class NewUserWin(object):
             if self.alert1.winfo_x() != 0:
                 self.alert1.place_forget()
             u = self.u.get()
-            self.db.connect()
-            res = self.db.execute_sql("SELECT username FROM users WHERE username='" + u + "'")
-            if res.rowcount == 0:
+            User.db.connect()
+            try:
+                res = User.users.get(User.users.username == u)
+                print res.username
+                self.u.bell()
+                self.alert2.place(x=15, y=22)
+            except User.users.DoesNotExist:
                 p = self.p1.get()
-                s = "INSERT INTO users (username, passwd) VALUES ('" \
-                    + u + "', '" + p + "')"
-                self.db.execute_sql(s)
+                s = User.users.create(username=u, passwd=p)
                 print "user added: ('" + u + "', '" + p + "')"
                 self.combo['values'] += (u, )
                 self.nuser.destroy()
-            else:
-                self.u.bell()
-                self.alert2.place(x=15, y=22)
-            self.db.close()
+            User.db.close()
         else:
             self.p2.bell()
             self.alert1.place(x=35, y=57)

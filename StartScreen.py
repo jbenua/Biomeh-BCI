@@ -5,20 +5,18 @@ import Tkinter as TkI
 from ttk import *
 from NewUserWin import NewUserWin
 from Result import Result
-
+import User
 
 class StartScreen(object):
     def __init__(self, root, user):
         self.user = user
         self.root = root
-        self.db = user.db
-        self.db.connect()
-        u_res = self.db.execute_sql("SELECT username FROM users")
+        User.db.connect()
+        u_res = User.users.select()
         list1 = []
         for i in u_res:
-            l = str(i).split("'")
-            list1.append(l[1])
-        self.db.close()
+            list1.append(i.username)
+        User.db.close()
         self.start_frame = Frame(root)
         self.passwd = Entry(self.start_frame, show="*")
         self.combo = Combobox(self.start_frame, values=list1)
@@ -26,6 +24,7 @@ class StartScreen(object):
         self.start_btn = Button(self.start_frame, text="START", command=self.start)
         self.alertu = TkI.Label(self.start_frame, text="choose user or create a new one", fg="red")
         self.alertup = TkI.Label(self.start_frame, text="incorrect pair 'login-password'", fg="red")
+        self.alertErr = TkI.Label(self.start_frame, text="error: device not found", fg="red")
         self.loading = TkI.Label(self.start_frame, text="reading and analysing data...", fg='green')
         self.design()
         self.start_frame.pack()
@@ -46,21 +45,31 @@ class StartScreen(object):
         if u != "Select user...":
             if self.alertu.winfo_x() != 0:
                 self.alertu.place_forget()
-            self.db.connect()
-            res = self.db.execute_sql("SELECT username, passwd FROM users WHERE username='"
-                                      + u + "' AND passwd='" + p + "'")
-            if res.rowcount == 1:
-                self.user.fill_info(self.db, u, p)
-                self.db.close()
-                self.user.read_data()
-                r = Result(self.root, self.user)
-                # better hide
-                self.start_frame.destroy()
-            else:
+            User.db.connect()
+            try:
+                res = User.users.get(User.users.username == u, User.users.passwd == p)
+                self.user.fill_info(u, p)
+                if self.user.read_data():
+                    self.show_results()
+                else:
+                    # test
+                    # self.show_results()
+                    #
+                    if self.alertup.winfo_x() != 0:
+                       self.alertup.place_forget()
+                    self.alertErr.place(x=70, y=42)
+            except User.users.DoesNotExist():
                 self.alertup.place(x=70, y=42)
+            finally:
+                User.db.close()
         else:
             self.start_btn.bell()
             self.alertu.place(x=70, y=42)
+
+    def show_results(self):
+        r = Result(self.root, self.user)
+        # better hide
+        self.start_frame.destroy()
 
     def new_u(self):
         a = NewUserWin(self.user, self.combo)

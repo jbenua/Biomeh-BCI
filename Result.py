@@ -2,20 +2,20 @@ __author__ = 'jbenua'
 
 import Tkinter as TkI
 from ttk import *
+import User
 
 
 class Result(object):
     def __init__(self, root, user):
         self.user = user
         self.user.print_all_info()
-        self.db = user.db
         self.root = root
         self.tags_out = Frame(root)
         self.tag_line = Entry(self.tags_out, width=35)
         self.label = Label(self.tags_out, text="It's detected, that you feel much like...")
         self.btn = Button(self.tags_out, text="Save changes", command=self.upd_tags)
         self.label1 = Label(self.tags_out, text="(we can be wrong sometimes,\nso you can edit these tags)")
-        self.tags = self.user.detect(self.db)
+        self.tags = self.user.detect()
         self.exit_btn = Button(self.tags_out, text="Exit", command=self.exit)
         self.design()
         self.tags_out.pack()
@@ -41,23 +41,24 @@ class Result(object):
         frame3.place(y=110, x=105)
 
     def save(self):
-        self.db.connect()
+        User.db.connect()
         for t in self.tags:
-            res = self.db.execute_sql("SELECT id FROM tags WHERE tag='" + t + "'")
-            if res.rowcount == 0:
-                self.db.execute_sql("INSERT INTO tags (tag) VALUE ('" + t + "')")
-                res = self.db.execute_sql("SELECT LAST_INSERT_ID();")
+            try:
+                res = User.tags.get(User.tags.tag == t).id
+            except User.tags.DoesNotExist:
+                res = User.tags.create(tag=t).id
                 print "tag added: ('" + t + "')"
-            for i in res:
-                s="SELECT * FROM sessions WHERE raw_id='" + str(self.user.current_session_id) +\
-                                           "' AND user_id='" + str(self.user.userid) + "' AND tag_id='" + str(i[0]) + "'"
-                res1 = self.db.execute_sql(s)
-                if res1.rowcount == 0:
-                    ins = "INSERT INTO sessions (raw_id, user_id, tag_id) VALUES('" +\
-                          str(self.user.current_session_id) + "', '" + str(self.user.userid) + "', '" + str(i[0]) + "')"
-                    self.db.execute_sql(ins)
+            try:
+                s = User.sessions.get(User.sessions.raw_id == str(self.user.current_session_id),
+                                      User.sessions.user_id == str(self.user.userid),
+                                      User.sessions.tag_id == str(res))
+            except User.sessions.DoesNotExist:
+                s = User.sessions.create(raw_id=str(self.user.current_session_id),
+                                         user_id=str(self.user.userid),
+                                         tag_id=str(res))
+        User.db.close()
 
     def exit(self):
-        if not self.tags and self.tags is not ['Nothing was read']:
+        if self.tags and self.tags is not ['Nothing was read']:
             self.save()
         self.root.quit()
