@@ -2,8 +2,10 @@ __author__ = 'user'
 from emotiv import Emotiv
 from sklearn import svm
 from peewee import *
+import scikit_test
 
 db = MySQLDatabase('headset', host='localhost', user='jbenua', passwd='jbenua')
+
 
 class users(Model):
     id = IntegerField()
@@ -80,7 +82,7 @@ class User(object):
         try:
             a = Emotiv()
             self.current_session_raw = a.setupWin()
-            a.device.close()
+            # a.device.close()
             self.get_raw_id()
             return True
         except Exception as err:
@@ -143,7 +145,7 @@ class User(object):
                                      raw.af3, raw.o2, raw.o1, raw.fc5, raw.x,
                                      raw.y, raw.unknown).where(raw.id == i.raw_id)
                 for j in get_raw:
-                    self.prev_data.append([j.f3, j.f3, j.fc6, j.p7, j.t8, j.f7,
+                    self.prev_data.append([j.f3, j.fc6, j.p7, j.t8, j.f7,
                                            j.f8, j.t7, j.p8, j.af4, j.f4, j.af3,
                                            j.o2, j.o1, j.fc5, j.x, j.y, j.unknown])
                 self.prev_tags.append(i.tag_id)
@@ -157,12 +159,11 @@ class User(object):
         # self.current_session_raw = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         # self.get_raw_id()
         #
-        if not self.current_session_raw:
+        if self.current_session_raw and (n_of_classes(self.prev_tags) > 1):
             # maybe change the method
             clf = svm.SVC()
             clf.fit(self.prev_data, self.prev_tags)
             a = clf.predict(self.current_session_raw)
-            print "svm:", clf.predict(self.current_session_raw)
             temp = []
             db.connect()
             for i in a:
@@ -171,7 +172,30 @@ class User(object):
                     temp.append(get_tags)
                 except tags.DoesNotExist:
                     print 'nothing was found'
+            #
+            #
+            # tests
+            mach = scikit_test.Learn().test(self.prev_data, self.prev_tags, self.current_session_raw)
+            mach_out=[]
+            for i in mach:
+                try:
+                    get_tags = tags.get(tags.id == i).tag
+                    mach_out.append(get_tags)
+                except tags.DoesNotExist:
+                    print 'nothing was found'
+            print "svm, nn, tree: ", mach_out
+            #
+            #
             db.close()
             return temp
         else:
-            return ['Nothing was read']
+            return ['Lack of data']
+
+
+def n_of_classes(lst):
+    seen = set()
+    for x in lst:
+        if x in seen:
+            continue
+        seen.add(x)
+    return len(seen)

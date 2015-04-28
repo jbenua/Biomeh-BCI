@@ -60,8 +60,6 @@ class StartScreen(object):
                     self.alertErr.place(x=70, y=42)
             except User.users.DoesNotExist():
                 self.alertup.place(x=70, y=42)
-            finally:
-                User.db.close()
         else:
             self.start_btn.bell()
             self.alertu.place(x=70, y=42)

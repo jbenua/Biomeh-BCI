@@ -59,6 +59,6 @@ class Result(object):
         User.db.close()
 
     def exit(self):
-        if self.tags and self.tags is not ['Nothing was read']:
+        if self.tags:
             self.save()
         self.root.quit()
