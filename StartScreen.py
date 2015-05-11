@@ -46,11 +46,9 @@ class StartScreen(object):
         self.var = IntVar()
         self.chbox = TkI.Checkbutton(self.start_frame, text="sign in with", variable=self.var)
 
-        self.vk = Radiobutton(self.start_frame, text="VK")
-
         imgPath = r"VK-Icon1.gif"
         photo = PhotoImage(file=imgPath)
-        self.vk.configure(image=photo)
+        self.vk = Label(self.start_frame, image=photo)
         self.vk.image = photo
 
         self.design()
