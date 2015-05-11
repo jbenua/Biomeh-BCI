@@ -5,6 +5,7 @@ import Tkinter as TkI
 from ttk import *
 import User
 
+
 class NewUserWin(object):
     def __init__(self, user, combo):
         self.combo = combo
@@ -37,6 +38,9 @@ class NewUserWin(object):
         self.nuser.focus_force()
 
     def add_user(self):
+        if self.u.get == "vk":
+            self.alert2.place(x=15, y=22)
+            #  reserved name
         if self.p1.get() == self.p2.get():
             if self.alert1.winfo_x() != 0:
                 self.alert1.place_forget()
@@ -49,7 +53,7 @@ class NewUserWin(object):
                 self.alert2.place(x=15, y=22)
             except User.users.DoesNotExist:
                 p = self.p1.get()
-                s = User.users.create(username=u, passwd=p)
+                User.users.create(username=u, passwd=p)
                 print "user added: ('" + u + "', '" + p + "')"
                 self.combo['values'] += (u, )
                 self.nuser.destroy()

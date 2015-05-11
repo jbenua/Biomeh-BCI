@@ -62,6 +62,9 @@ db.create_tables([users, raw, tags, sessions], safe=True)
 
 class User(object):
     def __init__(self):
+        self.vk = False
+        self.vk_token = False
+        self.fb = False
         self.userid = -1
         self.username = ""
         self.current_session_raw = []
