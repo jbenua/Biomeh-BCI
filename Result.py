@@ -77,7 +77,7 @@ class Result(object):
         frame3 = Frame(self.root)
         label3 = TkI.Label(frame3, text="Saved", fg="green")
         label3.pack()
-        frame3.place(y=90, x=105)
+        frame3.place(y=94, x=105)
 
     def save(self):
         User.db.connect()
