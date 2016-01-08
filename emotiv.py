@@ -1,4 +1,4 @@
-import gevent
+import asyncio
 
 try:
     import pywinusb.hid as hid
@@ -8,7 +8,7 @@ except:
     windows = False
 
 import os
-from gevent.queue import Queue
+from asyncio import Queue
 from Crypto.Cipher import AES
 from Crypto import Random
 import time
@@ -181,7 +181,8 @@ class EmotivPacket(object):
         return level
 
     def handle_quality(self, sensors):
-        current_contact_quality = self.get_level(self.rawData, quality_bits) / 540
+        current_contact_quality = self.get_level(
+            self.rawData, quality_bits) / 540
         sensor = ord(self.rawData[0])
         if sensor == 0:
             sensors['F3']['quality'] = current_contact_quality
@@ -305,7 +306,8 @@ class EmotivPacket(object):
             return 0
 
     def __repr__(self):
-        return 'EmotivPacket(counter=%i, battery=%i, gyroX=%i, gyroY=%i, F3=%i)' % (
+        return '''EmotivPacket(
+            counter=%i, battery=%i, gyroX=%i, gyroY=%i, F3=%i)''' % (
             self.counter,
             self.battery,
             self.gyroX,
@@ -316,6 +318,7 @@ class EmotivPacket(object):
 
 class Emotiv(object):
     def __init__(self, displayOutput=False, headsetId=0, research_headset=True):
+        print("IN INIT")
         self._goOn = True
         self.packets = Queue()
         self.packetsReceived = 0
@@ -351,17 +354,23 @@ class Emotiv(object):
                     os.system('cls')
                 else:
                     os.system('clear')
-                print "Packets Received: %s Packets Processed: %s" % (self.packetsReceived, self.packetsProcessed)
+                print("Packets Received: %s Packets Processed: %s" %
+                    self.packetsReceived, self.packetsProcessed)
                 print('\n'.join(
-                    "%s Reading: %s Strength: %s" % (k[1], self.sensors[k[1]]['value'], self.sensors[k[1]]['quality'])
+                    "%s Reading: %s Strength: %s" %
+                    (k[1], self.sensors[k[1]]['value'],
+                        self.sensors[k[1]]['quality'])
                     for k in enumerate(self.sensors)))
-                print "Battery: %i" % g_battery
+                print("Battery: %i" % g_battery)
 
     def setupWin(self):
         devices = []
         temp_data = []
+        print("GETINg devices")
         try:
+            len(hid.find_all_hid_devices())
             for device in hid.find_all_hid_devices():
+                print(device)
                 if device.vendor_id != 0x21A1 and device.vendor_id != 0x1234:
                     continue
                 elif device.product_name == 'Emotiv RAW DATA':
@@ -371,6 +380,8 @@ class Emotiv(object):
                     # print device.serial_number
                     device.set_raw_data_handler(self.handler)
             temp_data = self.setupCrypto(self.serialNum)
+        except Exception as e:
+            print(e)
         finally:
             for device in devices:
                 device.close()
@@ -431,15 +442,15 @@ class Emotiv(object):
     def dequeue(self):
         try:
             return self.packets.get()
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
 
 if __name__ == "__main__":
+    print("START")
     try:
         a = Emotiv()
         a.setupWin()
+        print("HERE")
         #temp_data = a.setupWin()
     except KeyboardInterrupt:
         a.device.close()
-        gevent.shutdown()
-
