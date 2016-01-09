@@ -1,5 +1,3 @@
-__author__ = 'jbenua'
-
 from Tkinter import *
 import Tkinter as TkI
 from ttk import *
@@ -20,7 +18,8 @@ class NewUserWin(object):
         self.p2 = Entry(self.nuser, show="*")
         self.cr = Button(self.nuser, text="Create!", command=self.add_user)
         self.alert1 = TkI.Label(self.nuser, text="no match!", fg="red")
-        self.alert2 = TkI.Label(self.nuser, text="user already exists!", fg="red")
+        self.alert2 = TkI.Label(
+            self.nuser, text="user already exists!", fg="red")
         self.design()
 
     def design(self):
@@ -33,7 +32,8 @@ class NewUserWin(object):
         self.u.grid(row=0, column=1, padx=5, pady=5)
         self.p1.grid(row=1, column=1, padx=5, pady=5)
         self.p2.grid(row=2, column=1, padx=5, pady=5)
-        self.cr.grid(row=3, column=0, columnspan=2, padx=30, pady=10, sticky="ew")
+        self.cr.grid(
+            row=3, column=0, columnspan=2, padx=30, pady=10, sticky="ew")
         self.nuser.grab_set()
         self.nuser.focus_force()
 

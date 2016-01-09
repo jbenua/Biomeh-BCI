@@ -1,12 +1,13 @@
-__author__ = 'jbenua'
-
 from sklearn import svm
 from sklearn.neighbors.nearest_centroid import NearestCentroid
 from sklearn import tree
 
+
 class Learn(object):
     def test(self, X, Y, test):
-        t = [self.sup_vm(X, Y, test), self.nn_centroid(X, Y, test), self.d_tree(X, Y, test)]
+        t = [self.sup_vm(X, Y, test),
+             self.nn_centroid(X, Y, test),
+             self.d_tree(X, Y, test)]
         print "\n"
         return t
 

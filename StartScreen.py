@@ -1,5 +1,3 @@
-__author__ = 'jbenua'
-
 from Tkinter import *
 import Tkinter as TkI
 from ttk import *
@@ -33,18 +31,25 @@ class StartScreen(object):
         self.start_frame = Frame(root)
         self.passwd = Entry(self.start_frame, show="*")
         self.combo = Combobox(self.start_frame, values=list1)
-        self.nu = Button(self.start_frame, width=47, text="new user", command=self.new_u)
-        self.start_btn = Button(self.start_frame, text="START", command=self.start)
+        self.nu = Button(
+            self.start_frame, width=47, text="new user", command=self.new_u)
+        self.start_btn = Button(
+            self.start_frame, text="START", command=self.start)
 
-        self.alertu = TkI.Label(self.start_frame, text="choose user or create a new one", fg="red")
-        self.alertup = TkI.Label(self.start_frame, text="incorrect pair 'login-password'", fg="red")
-        self.alertErr = TkI.Label(self.start_frame, text="error: device not found", fg="red")
+        self.alertu = TkI.Label(
+            self.start_frame, text="choose user or create a new one", fg="red")
+        self.alertup = TkI.Label(
+            self.start_frame, text="incorrect pair 'login-password'", fg="red")
+        self.alertErr = TkI.Label(
+            self.start_frame, text="error: device not found", fg="red")
         self.vk_alert = TkI.Label(self.start_frame, fg='red')
 
-        self.loading = TkI.Label(self.start_frame, text="reading and analysing data...", fg='green')
+        self.loading = TkI.Label(
+            self.start_frame, text="reading and analysing data...", fg='green')
 
         self.var = IntVar()
-        self.chbox = TkI.Checkbutton(self.start_frame, text="sign in with", variable=self.var)
+        self.chbox = TkI.Checkbutton(
+            self.start_frame, text="sign in with", variable=self.var)
 
         imgPath = r"VK-Icon1.gif"
         photo = PhotoImage(file=imgPath)
@@ -55,14 +60,19 @@ class StartScreen(object):
         self.start_frame.pack(pady=0)
 
     def design(self):
-        Style().map('TButton', background=[('pressed',  'green')], text=[('pressed', 'loading')])
+        Style().map(
+            'TButton', background=[('pressed',  'green')],
+            text=[('pressed', 'loading')])
         self.root.geometry('450x165')
         self.root.resizable(False, False)
         self.combo.set("Select user...")
         self.combo.grid(row=0, column=0, padx=10, pady=30, sticky=W)
         self.passwd.grid(row=0, column=1, padx=10, pady=30, sticky=W)
-        self.nu.grid(row=1, column=0, columnspan=3, padx=10, pady=30, sticky="nw")
-        self.start_btn.grid(row=0, column=2, rowspan=3, columnspan=2, padx=10, pady=30, sticky="nse")
+        self.nu.grid(
+            row=1, column=0, columnspan=3, padx=10, pady=30, sticky="nw")
+        self.start_btn.grid(
+            row=0, column=2, rowspan=3, columnspan=2,
+            padx=10, pady=30, sticky="nse")
         self.chbox.place(x=10, y=63)
         self.vk.place(x=100, y=60)
 
@@ -79,7 +89,8 @@ class StartScreen(object):
         if self.u != "Select user...":
             if self.var.get() == 1:
                 try:
-                    self.user.vk = vk.API('4912863', self.u, self.p, scope='wall')
+                    self.user.vk = vk.API(
+                        '4912863', self.u, self.p, scope='wall')
                     self.user.vk_token = self.user.vk.access_token
                     addifnew("vk", self.u)
                     self.var.set(0)
@@ -96,7 +107,9 @@ class StartScreen(object):
                 User.db.connect()
                 try:
                     print self.u, self.p
-                    User.users.get(User.users.username == self.u, User.users.passwd == self.p)
+                    User.users.get(
+                        User.users.username == self.u,
+                        User.users.passwd == self.p)
                 except:
                     self.alertup.place(x=70, y=85)
                     return

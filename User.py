@@ -1,4 +1,3 @@
-__author__ = 'user'
 from emotiv import Emotiv
 from sklearn import svm
 from peewee import *
@@ -138,19 +137,23 @@ class User(object):
     def fill_info(self, name, pswd):
         db.connect()
         self.username = name
-        get_id = users.get(users.username == self.username, users.passwd == pswd)
+        get_id = users.get(
+          users.username == self.username, users.passwd == pswd)
         self.userid = get_id.id
         try:
-            get_tags_and_raw = sessions.select(sessions.tag_id, sessions.raw_id).where(sessions.user_id == self.userid)
+            get_tags_and_raw = sessions.select(
+              sessions.tag_id, sessions.raw_id).where(
+              sessions.user_id == self.userid)
             for i in get_tags_and_raw:
                 get_raw = raw.select(raw.f3, raw.fc6, raw.p7, raw.t8, raw.f7,
                                      raw.f8, raw.t7, raw.p8, raw.af4, raw.f4,
                                      raw.af3, raw.o2, raw.o1, raw.fc5, raw.x,
-                                     raw.y, raw.unknown).where(raw.id == i.raw_id)
+                                     raw.y, raw.unknown).where(
+                                     raw.id == i.raw_id)
                 for j in get_raw:
-                    self.prev_data.append([j.f3, j.fc6, j.p7, j.t8, j.f7,
-                                           j.f8, j.t7, j.p8, j.af4, j.f4, j.af3,
-                                           j.o2, j.o1, j.fc5, j.x, j.y, j.unknown])
+                    self.prev_data.append([
+                      j.f3, j.fc6, j.p7, j.t8, j.f7, j.f8, j.t7, j.p8, j.af4,
+                      j.f4, j.af3, j.o2, j.o1, j.fc5, j.x, j.y, j.unknown])
                 self.prev_tags.append(i.tag_id)
         except sessions.DoesNotExist:
             print "no previous data found"
@@ -159,7 +162,8 @@ class User(object):
 
     def detect(self):
         # test
-        # self.current_session_raw = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        # self.current_session_raw = [
+        #     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         # self.get_raw_id()
         #
         if self.current_session_raw and (n_of_classes(self.prev_tags) > 1):
@@ -178,8 +182,9 @@ class User(object):
             #
             #
             # tests
-            mach = scikit_test.Learn().test(self.prev_data, self.prev_tags, self.current_session_raw)
-            mach_out=[]
+            mach = scikit_test.Learn().test(
+              self.prev_data, self.prev_tags, self.current_session_raw)
+            mach_out = []
             for i in mach:
                 try:
                     get_tags = tags.get(tags.id == i).tag
