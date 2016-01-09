@@ -1,6 +1,7 @@
 from emotiv import Emotiv
 from sklearn import svm
 from peewee import *
+import pymysql
 import scikit_test
 
 db = MySQLDatabase('headset', host='localhost', user='jbenua', passwd='jbenua')
@@ -73,12 +74,12 @@ class User(object):
         self.db = db
 
     def print_all_info(self):
-        print "id: ", self.userid
-        print "name: " + self.username
-        print "current raw: ", self.current_session_raw
-        print "current raw_id:", self.current_session_id
-        print "previous tags: ", self.prev_tags
-        print "previous sessions: ", self.prev_data
+        print("id: ", self.userid)
+        print("name: " + self.username)
+        print("current raw: ", self.current_session_raw)
+        print("current raw_id:", self.current_session_id)
+        print("previous tags: ", self.prev_tags)
+        print("previous sessions: ", self.prev_data)
 
     def read_data(self):
         try:
@@ -88,9 +89,9 @@ class User(object):
             self.get_raw_id()
             return True
         except Exception as err:
-            print "Error reading raw data! "
+            print("Error reading raw data! ")
             for t in err.args:
-                print t
+                print(t)
             return False
 
     def get_raw_id(self):
@@ -130,7 +131,7 @@ class User(object):
                              x=self.current_session_raw[14],
                              y=self.current_session_raw[15],
                              unknown=self.current_session_raw[16])
-            print "it's a new raw"
+            print("it's a new raw")
         finally:
             self.current_session_id = res.id
 
@@ -156,7 +157,7 @@ class User(object):
                       j.f4, j.af3, j.o2, j.o1, j.fc5, j.x, j.y, j.unknown])
                 self.prev_tags.append(i.tag_id)
         except sessions.DoesNotExist:
-            print "no previous data found"
+            print("no previous data found")
         finally:
             db.close()
 
@@ -178,7 +179,7 @@ class User(object):
                     get_tags = tags.get(tags.id == i).tag
                     temp.append(get_tags)
                 except tags.DoesNotExist:
-                    print 'nothing was found'
+                    print('nothing was found')
             #
             #
             # tests
@@ -190,8 +191,8 @@ class User(object):
                     get_tags = tags.get(tags.id == i).tag
                     mach_out.append(get_tags)
                 except tags.DoesNotExist:
-                    print 'nothing was found'
-            print "svm, nn, tree: ", mach_out
+                    print('nothing was found')
+            print("svm, nn, tree: ", mach_out)
             #
             #
             db.close()

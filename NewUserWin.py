@@ -1,6 +1,6 @@
-from Tkinter import *
-import Tkinter as TkI
-from ttk import *
+from tkinter import *
+import tkinter as TkI
+from tkinter.ttk import *
 import User
 
 
@@ -48,13 +48,13 @@ class NewUserWin(object):
             User.db.connect()
             try:
                 res = User.users.get(User.users.username == u)
-                print res.username
+                print(res.username)
                 self.u.bell()
                 self.alert2.place(x=15, y=22)
             except User.users.DoesNotExist:
                 p = self.p1.get()
                 User.users.create(username=u, passwd=p)
-                print "user added: ('" + u + "', '" + p + "')"
+                print("user added: ('" + u + "', '" + p + "')")
                 self.combo['values'] += (u, )
                 self.nuser.destroy()
             User.db.close()

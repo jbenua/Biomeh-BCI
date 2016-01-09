@@ -1,6 +1,6 @@
-from Tkinter import *
-import Tkinter as TkI
-from ttk import *
+from tkinter import *
+import tkinter as TkI
+from tkinter.ttk import *
 import User
 
 
@@ -48,7 +48,7 @@ class Result(object):
     def send(self):
         curstr = self.vk_text.get('1.0', 'end')
         self.vk_text.grid_remove()
-        print curstr
+        print(curstr)
         try:
             self.root.geometry('250x300')
             self.user.vk.wall.post(message=curstr)
@@ -58,7 +58,7 @@ class Result(object):
             self.vk_button.grid(row=4, column=0, pady=10)
             self.exit_btn.grid(row=5, column=0, pady=10)
         except:
-            print "err"
+            print("err")
 
     def design(self):
         s = ""
@@ -92,7 +92,7 @@ class Result(object):
                 res = User.tags.get(User.tags.tag == t).id
             except User.tags.DoesNotExist:
                 res = User.tags.create(tag=t).id
-                print "tag added: ('" + t + "')"
+                print("tag added: ('" + t + "')")
             try:
                 User.sessions.get(
                     User.sessions.raw_id == str(self.user.current_session_id),

@@ -1,6 +1,6 @@
-from Tkinter import *
-import Tkinter as TkI
-from ttk import *
+from tkinter import *
+import tkinter as TkI
+from tkinter.ttk import *
 from NewUserWin import NewUserWin
 from Result import Result
 import User
@@ -83,7 +83,7 @@ class StartScreen(object):
 
     def start(self):
         self.clear_errors()
-        print self.var.get()
+        print(self.var.get())
         self.u = self.combo.get()
         self.p = self.passwd.get()
         if self.u != "Select user...":
@@ -94,19 +94,19 @@ class StartScreen(object):
                     self.user.vk_token = self.user.vk.access_token
                     addifnew("vk", self.u)
                     self.var.set(0)
-                    print "vk ok"
+                    print("vk ok")
                     self.p = self.u
                     self.u = "vk"
 
                 except Exception as err:
-                    print "Error signing in!"
+                    print("Error signing in!")
                     self.vk_alert.configure(text=err.args[0])
                     self.vk_alert.place(x=30, y=85)
                     return
             if self.var.get() == 0:
                 User.db.connect()
                 try:
-                    print self.u, self.p
+                    print(self.u, self.p)
                     User.users.get(
                         User.users.username == self.u,
                         User.users.passwd == self.p)

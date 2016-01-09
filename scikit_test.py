@@ -8,28 +8,28 @@ class Learn(object):
         t = [self.sup_vm(X, Y, test),
              self.nn_centroid(X, Y, test),
              self.d_tree(X, Y, test)]
-        print "\n"
+        print("\n")
         return t
 
     def d_tree(self, X, y, test):
         clf = tree.DecisionTreeClassifier()
         clf = clf.fit(X, y)
         t = clf.predict(test)
-        print "tree:", t
+        print("tree:", t)
         return t
 
     def sup_vm(self, X, y, test):
         clf = svm.SVC()
         clf.fit(X, y)
         t = clf.predict(test)
-        print "svm:", t
+        print("svm:", t)
         return t
 
     def nn_centroid(self, X, y, test):
         clf = NearestCentroid()
         clf.fit(X, y)
         t = clf.predict(test)
-        print "nn_centroid:", t
+        print("nn_centroid:", t)
         return t
 
     def try_methods(self, X, Y, test):
@@ -37,7 +37,7 @@ class Learn(object):
         self.sup_vm(X, Y, test)
         self.nn_centroid(X, Y, test)
         self.d_tree(X, Y, test)
-        print "\n"
+        print("\n")
 
 if __name__ == "__main__":
     a = Learn()
