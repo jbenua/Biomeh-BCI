@@ -7,11 +7,12 @@ import User
 import vk
 
 
-def addifnew(u, p):
+def addifnew(username, password):
     try:
-        User.users.get(User.users.username == u, User.users.passwd == p)
+        User.users.get(
+            User.users.username == username, User.users.passwd == password)
     except User.users.DoesNotExist:
-        User.users.create(username=u, passwd=p)
+        User.users.create(username=username, passwd=password)
 
 
 class StartScreen(object):
