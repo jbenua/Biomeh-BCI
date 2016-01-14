@@ -21,15 +21,23 @@ sensorBits = {
     'T7': [66, 67, 68, 69, 70, 71, 56, 57, 58, 59, 60, 61, 62, 63],
     'P7': [84, 85, 86, 87, 72, 73, 74, 75, 76, 77, 78, 79, 64, 65],
     'O1': [102, 103, 88, 89, 90, 91, 92, 93, 94, 95, 80, 81, 82, 83],
-    'O2': [140, 141, 142, 143, 128, 129, 130, 131, 132, 133, 134, 135, 120, 121],
-    'P8': [158, 159, 144, 145, 146, 147, 148, 149, 150, 151, 136, 137, 138, 139],
-    'T8': [160, 161, 162, 163, 164, 165, 166, 167, 152, 153, 154, 155, 156, 157],
-    'F8': [178, 179, 180, 181, 182, 183, 168, 169, 170, 171, 172, 173, 174, 175],
-    'AF4': [196, 197, 198, 199, 184, 185, 186, 187, 188, 189, 190, 191, 176, 177],
-    'FC6': [214, 215, 200, 201, 202, 203, 204, 205, 206, 207, 192, 193, 194, 195],
-    'F4': [216, 217, 218, 219, 220, 221, 222, 223, 208, 209, 210, 211, 212, 213]
+    'O2': [
+        140, 141, 142, 143, 128, 129, 130, 131, 132, 133, 134, 135, 120, 121],
+    'P8': [
+        158, 159, 144, 145, 146, 147, 148, 149, 150, 151, 136, 137, 138, 139],
+    'T8': [
+        160, 161, 162, 163, 164, 165, 166, 167, 152, 153, 154, 155, 156, 157],
+    'F8': [
+        178, 179, 180, 181, 182, 183, 168, 169, 170, 171, 172, 173, 174, 175],
+    'AF4': [
+        196, 197, 198, 199, 184, 185, 186, 187, 188, 189, 190, 191, 176, 177],
+    'FC6': [
+        214, 215, 200, 201, 202, 203, 204, 205, 206, 207, 192, 193, 194, 195],
+    'F4': [
+        216, 217, 218, 219, 220, 221, 222, 223, 208, 209, 210, 211, 212, 213]
 }
-quality_bits = [99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112]
+quality_bits = [
+    99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112]
 
 g_battery = 0
 tasks = Queue()
@@ -159,7 +167,8 @@ class EmotivPacket(object):
             self.counter = 128
         self.sync = self.counter == 0xe9
 
-        # the RESERVED byte stores the least significant 4 bits for gyroX and gyroY
+        # the RESERVED byte stores the least significant 4 bits 
+        # for gyroX and gyroY
         self.gyroX = ((ord(data[29]) << 4) | (ord(data[31]) >> 4))
         self.gyroY = ((ord(data[30]) << 4) | (ord(data[31]) & 0x0F))
         sensors['X']['value'] = self.gyroX
@@ -354,7 +363,8 @@ class Emotiv(object):
                     os.system('cls')
                 else:
                     os.system('clear')
-                print("Packets Received: %s Packets Processed: %s" %
+                print(
+                    "Packets Received: %s Packets Processed: %s" %
                     self.packetsReceived, self.packetsProcessed)
                 print('\n'.join(
                     "%s Reading: %s Strength: %s" %
@@ -430,12 +440,12 @@ class Emotiv(object):
                 self.packets.put_nowait(self.lastPacket)
                 self.packetsProcessed += 1
                 self.displayOutput = True
-                #self.updateStdout()
+                # self.updateStdout()
                 self.displayOutput = False
                 for k in enumerate(self.sensors):
                     vector[k[0]] += self.sensors[k[1]]['value']
                 i += 1
-                #print vector
+                # print vector
                 time.sleep(1)
                 # edit time step here
 
@@ -451,6 +461,6 @@ if __name__ == "__main__":
         a = Emotiv()
         a.setupWin()
         print("HERE")
-        #temp_data = a.setupWin()
+        # temp_data = a.setupWin()
     except KeyboardInterrupt:
         a.device.close()

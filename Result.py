@@ -1,7 +1,7 @@
 from tkinter import *
 import tkinter as TkI
 from tkinter.ttk import *
-import User
+from modules import User
 
 
 class Result(object):

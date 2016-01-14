@@ -1,7 +1,6 @@
 from emotiv import Emotiv
 from sklearn import svm
 from peewee import *
-import pymysql
 import scikit_test
 
 db = MySQLDatabase('headset', host='localhost', user='jbenua', passwd='jbenua')

@@ -3,7 +3,7 @@ import tkinter as TkI
 from tkinter.ttk import *
 from NewUserWin import NewUserWin
 from Result import Result
-import User
+from modules import User
 import vk
 
 
@@ -81,6 +81,8 @@ class StartScreen(object):
         for i in [self.alertu, self.alertup, self.vk_alert, self.alertErr]:
             if i.winfo_x() != 0:
                 i.place_forget()
+
+#########
 
     def start(self):
         self.clear_errors()
