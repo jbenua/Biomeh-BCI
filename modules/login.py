@@ -1,4 +1,5 @@
-from PyQt4 import uic, QtCore
+from PyQt4 import uic
+from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QDialog
 from . import User
 import sys
@@ -57,9 +58,7 @@ class LoginDialog(QDialog, Login):
         self.user = current_user
         uic.loadUi(LOGIN_UI, self)
         self.error.hide()
-        self.connect(
-            self.start_button,
-            QtCore.SIGNAL('clicked()'), self.on_start_button)
+        self.start_button.clicked.connect(self.on_start_button)
 
     def display_error(self, error="DEFAULT ERROR MSG"):
         """display error msg at the bottom of the dialog"""
@@ -77,13 +76,16 @@ class LoginDialog(QDialog, Login):
             # create account
 
             if not self.sign_up(username, password):
-                return False
+                return
         # log in
 
         if not self.log_in(username, password):
-            return False
+            return
         self.user.fill_info(username, password)
-        return True
+        self.emit(SIGNAL("logged()"))
+        # create main window here
+        self.close()
+        return
         # maybe quit here
 
         if sys.argv[1] == 'test':

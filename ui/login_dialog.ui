@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>LoginDialog</class>
  <widget class="QDialog" name="LoginDialog">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -34,6 +37,9 @@
   <property name="windowIcon">
    <iconset>
     <normaloff>../img/emotiv_icon.png</normaloff>../img/emotiv_icon.png</iconset>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
   </property>
   <widget class="QCheckBox" name="new_user_checkbox">
    <property name="geometry">

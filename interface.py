@@ -2,12 +2,12 @@ from tkinter import *
 from StartScreen import StartScreen
 from modules.User import User
 import sys
-from PyQt4 import uic, QtCore
 from PyQt4.QtGui import *
+from modules.mainwindow import MainWindow
 
-from modules.login import LoginDialog
 
 ICON = "img/emotiv_icon.png"
+
 
 if __name__ == "__main__":
     root = Tk()
@@ -20,8 +20,8 @@ if __name__ == "__main__":
 
     # pyqt
     app = QApplication(sys.argv)
-
-    window = LoginDialog(user)
-    window.show()
+    main_window = MainWindow(user)
 
     sys.exit(app.exec_())
+    # app.exec_()
+    print("EXITING")
