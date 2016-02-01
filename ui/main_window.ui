@@ -18,7 +18,7 @@
     <normaloff>../img/emotiv_icon.png</normaloff>../img/emotiv_icon.png</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>12</x>
@@ -29,7 +29,7 @@
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_3">
      <item>
-      <widget class="QGraphicsView" name="raw_data">
+      <widget class="PlotWidget" name="raw_data">
        <property name="minimumSize">
         <size>
          <width>500</width>
@@ -181,6 +181,13 @@
    </widget>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

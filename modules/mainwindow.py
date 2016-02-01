@@ -29,3 +29,8 @@ class MainWindow(QMainWindow):
 
         pixmap = QPixmap(GO_LEFT_PIC).scaledToWidth(self.walking_man.width())
         self.walking_man.setPixmap(pixmap)
+        import numpy as np
+        import pyqtgraph as pg
+
+        data = np.random.normal(size=1000)
+        self.raw_data.plot(data)
