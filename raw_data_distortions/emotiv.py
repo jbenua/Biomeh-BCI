@@ -4,10 +4,11 @@ from Crypto import Random
 import asyncio
 from asyncio import Queue, sleep
 from subprocess import check_output
+import datetime
 
 
-DEVICE_POLL_INTERVAL = 0.1
-SCREEN_UPDATE_INTERVAL = 0.1
+DEVICE_POLL_INTERVAL = 2
+SCREEN_UPDATE_INTERVAL = 0.005
 
 sensor_bits = {
     'F3': [10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7],
@@ -475,7 +476,6 @@ class Emotiv(object):
                     self.cipher.decrypt(task[16:]))
                 self.packets.put_nowait(
                     EmotivPacket(data, self.sensors, self.old_model))
-                print(self.packets.qsize())
                 self.packets_processed += 1
             except Exception as e:
                 print(type(e), e)
@@ -490,13 +490,16 @@ class Emotiv(object):
         print("in update")
         while self.running:
             if self.display_output:
-                print(self.packets.qsize())
                 packet = await self.packets.get()
-                print(packet)
+                # print(packet)
                 # print('\n'.join("%s Reading: %s Quality: %s" %
                 #     (k[1], self.sensors[k[1]]['value'],
                 #         self.sensors[k[1]]['quality'])
                 #     for k in enumerate(self.sensors)))
+                a = ["{}".format(
+                    self.sensors[k]['value'])
+                    for k in ['F3', 'FC6', 'P7']]
+                print(datetime.datetime.now(), a[0], a[1], a[2])
                 await sleep(SCREEN_UPDATE_INTERVAL)
         print("return")
 
@@ -506,8 +509,6 @@ if __name__ == "__main__":
     a.running = True
     a.display_output = True
     try:
-        for o in [a.setup, a.update_console]:
-            print(asyncio.iscoroutine(o))
         loop_tasks = [
             asyncio.ensure_future(a.setup()),
             asyncio.ensure_future(a.update_console())

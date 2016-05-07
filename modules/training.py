@@ -1,5 +1,4 @@
 from PyQt4 import uic
-from PyQt4.QtCore import SIGNAL
 from PyQt4.QtGui import QDialog
 import sys
 from PyQt4.QtGui import *
@@ -44,8 +43,9 @@ class TrainingDialog(QDialog):
         if not self.title_input.text():
             QMessageBox.critical(self, "Error", 'Incorrect user or password')
         else:
-            #save data
-            ...
+            pass
+            # save data
+            # close dialogf
 
     def on_cancel(self):
         """cancel button clicked"""

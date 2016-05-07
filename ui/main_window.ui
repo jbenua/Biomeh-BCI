@@ -135,25 +135,6 @@
         </layout>
        </item>
        <item>
-        <widget class="QLabel" name="errors">
-         <property name="minimumSize">
-          <size>
-           <width>160</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">color: red</string>
-         </property>
-         <property name="text">
-          <string>Errors</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QLabel" name="walking_man">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">

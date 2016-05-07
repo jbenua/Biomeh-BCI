@@ -8,6 +8,9 @@ from modules.mainwindow import MainWindow
 
 ICON = "img/emotiv_icon.png"
 
+# set icons everywhere
+# replace error labels to QErrorMessage | QMessageBox
+
 
 if __name__ == "__main__":
     # root = Tk()

@@ -1,5 +1,3 @@
-import asyncio
-
 try:
     import pywinusb.hid as hid
 
@@ -8,10 +6,14 @@ except:
     windows = False
 
 import os
-from asyncio import Queue
+# from asyncio import Queue
 from Crypto.Cipher import AES
 from Crypto import Random
 import time
+import asyncio
+from asyncio import Queue
+
+from subprocess import check_output
 
 sensorBits = {
     'F3': [10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7],
@@ -154,180 +156,138 @@ byte_names = {
     ],
 }
 
-
 class EmotivPacket(object):
+    """
+    Basic semantics for input bytes.
+    """
+
     def __init__(self, data, sensors):
+        """
+        Initializes packet data. Sets the global battery value.
+        Updates each sensor with current sensor value from the packet data.
+        """
         global g_battery
-        self.rawData = data
+        self.raw_data = data
         self.counter = ord(data[0])
         self.battery = g_battery
-        if (self.counter > 127):
+        if self.counter > 127:
             self.battery = self.counter
-            g_battery = self.battery_percent()
+            g_battery = battery_values[str(self.battery)]
             self.counter = 128
         self.sync = self.counter == 0xe9
-
-        # the RESERVED byte stores the least significant 4 bits 
-        # for gyroX and gyroY
-        self.gyroX = ((ord(data[29]) << 4) | (ord(data[31]) >> 4))
-        self.gyroY = ((ord(data[30]) << 4) | (ord(data[31]) & 0x0F))
-        sensors['X']['value'] = self.gyroX
-        sensors['Y']['value'] = self.gyroY
-
-        for name, bits in sensorBits.items():
-            value = self.get_level(self.rawData, bits)
+        self.gyro_x = ord(data[29]) - 106
+        self.gyro_y = ord(data[30]) - 105
+        sensors['X']['value'] = self.gyro_x
+        sensors['Y']['value'] = self.gyro_y
+        for name, bits in sensor_bits.items():
+            #Get Level for sensors subtract 8192 to get signed value
+            value = get_level(self.raw_data, bits) - 8192
             setattr(self, name, (value,))
             sensors[name]['value'] = value
+        self.old_model = False
         self.handle_quality(sensors)
         self.sensors = sensors
 
-    def get_level(self, data, bits):
-        level = 0
-        for i in range(13, -1, -1):
-            level <<= 1
-            b, o = (bits[i] / 8) + 1, bits[i] % 8
-            level |= (ord(data[b]) >> o) & 1
-        return level
-
     def handle_quality(self, sensors):
-        current_contact_quality = self.get_level(
-            self.rawData, quality_bits) / 540
-        sensor = ord(self.rawData[0])
-        if sensor == 0:
+        """
+        Sets the quality value for the sensor from the quality bits in the packet data.
+        Optionally will return the value.
+        """
+        if self.old_model:
+            current_contact_quality = get_level(self.raw_data, quality_bits) / 540
+        else:
+            current_contact_quality = get_level(self.raw_data, quality_bits) / 1024
+        sensor = ord(self.raw_data[0])
+        if sensor == 0 or sensor == 64:
             sensors['F3']['quality'] = current_contact_quality
-        elif sensor == 1:
+        elif sensor == 1 or sensor == 65:
             sensors['FC5']['quality'] = current_contact_quality
-        elif sensor == 2:
+        elif sensor == 2 or sensor == 66:
             sensors['AF3']['quality'] = current_contact_quality
-        elif sensor == 3:
+        elif sensor == 3 or sensor == 67:
             sensors['F7']['quality'] = current_contact_quality
-        elif sensor == 4:
+        elif sensor == 4 or sensor == 68:
             sensors['T7']['quality'] = current_contact_quality
-        elif sensor == 5:
+        elif sensor == 5 or sensor == 69:
             sensors['P7']['quality'] = current_contact_quality
-        elif sensor == 6:
+        elif sensor == 6 or sensor == 70:
             sensors['O1']['quality'] = current_contact_quality
-        elif sensor == 7:
+        elif sensor == 7 or sensor == 71:
             sensors['O2']['quality'] = current_contact_quality
-        elif sensor == 8:
+        elif sensor == 8 or sensor == 72:
             sensors['P8']['quality'] = current_contact_quality
-        elif sensor == 9:
+        elif sensor == 9 or sensor == 73:
             sensors['T8']['quality'] = current_contact_quality
-        elif sensor == 10:
+        elif sensor == 10 or sensor == 74:
             sensors['F8']['quality'] = current_contact_quality
-        elif sensor == 11:
+        elif sensor == 11 or sensor == 75:
             sensors['AF4']['quality'] = current_contact_quality
-        elif sensor == 12:
+        elif sensor == 12 or sensor == 76 or sensor == 80:
             sensors['FC6']['quality'] = current_contact_quality
-        elif sensor == 13:
+        elif sensor == 13 or sensor == 77:
             sensors['F4']['quality'] = current_contact_quality
-        elif sensor == 14:
+        elif sensor == 14 or sensor == 78:
             sensors['F8']['quality'] = current_contact_quality
-        elif sensor == 15:
+        elif sensor == 15 or sensor == 79:
             sensors['AF4']['quality'] = current_contact_quality
-        elif sensor == 64:
-            sensors['F3']['quality'] = current_contact_quality
-        elif sensor == 65:
-            sensors['FC5']['quality'] = current_contact_quality
-        elif sensor == 66:
-            sensors['AF3']['quality'] = current_contact_quality
-        elif sensor == 67:
-            sensors['F7']['quality'] = current_contact_quality
-        elif sensor == 68:
-            sensors['T7']['quality'] = current_contact_quality
-        elif sensor == 69:
-            sensors['P7']['quality'] = current_contact_quality
-        elif sensor == 70:
-            sensors['O1']['quality'] = current_contact_quality
-        elif sensor == 71:
-            sensors['O2']['quality'] = current_contact_quality
-        elif sensor == 72:
-            sensors['P8']['quality'] = current_contact_quality
-        elif sensor == 73:
-            sensors['T8']['quality'] = current_contact_quality
-        elif sensor == 74:
-            sensors['F8']['quality'] = current_contact_quality
-        elif sensor == 75:
-            sensors['AF4']['quality'] = current_contact_quality
-        elif sensor == 76:
-            sensors['FC6']['quality'] = current_contact_quality
-        elif sensor == 77:
-            sensors['F4']['quality'] = current_contact_quality
-        elif sensor == 78:
-            sensors['F8']['quality'] = current_contact_quality
-        elif sensor == 79:
-            sensors['AF4']['quality'] = current_contact_quality
-        elif sensor == 80:
-            sensors['FC6']['quality'] = current_contact_quality
         else:
             sensors['Unknown']['quality'] = current_contact_quality
             sensors['Unknown']['value'] = sensor
         return current_contact_quality
 
-    def battery_percent(self):
-        if self.battery > 248:
-            return 100
-        elif self.battery == 247:
-            return 99
-        elif self.battery == 246:
-            return 97
-        elif self.battery == 245:
-            return 93
-        elif self.battery == 244:
-            return 89
-        elif self.battery == 243:
-            return 85
-        elif self.battery == 242:
-            return 82
-        elif self.battery == 241:
-            return 77
-        elif self.battery == 240:
-            return 72
-        elif self.battery == 239:
-            return 66
-        elif self.battery == 238:
-            return 62
-        elif self.battery == 237:
-            return 55
-        elif self.battery == 236:
-            return 46
-        elif self.battery == 235:
-            return 32
-        elif self.battery == 234:
-            return 20
-        elif self.battery == 233:
-            return 12
-        elif self.battery == 232:
-            return 6
-        elif self.battery == 231:
-            return 4
-        elif self.battery == 230:
-            return 3
-        elif self.battery == 229:
-            return 2
-        elif self.battery == 228:
-            return 2
-        elif self.battery == 227:
-            return 2
-        elif self.battery == 226:
-            return 1
-        else:
-            return 0
-
     def __repr__(self):
-        return '''EmotivPacket(
-            counter=%i, battery=%i, gyroX=%i, gyroY=%i, F3=%i)''' % (
+        """
+        Returns custom string representation of the Emotiv Packet.
+        """
+        return 'EmotivPacket(counter=%i, battery=%i, gyro_x=%i, gyro_y=%i)' % (
             self.counter,
             self.battery,
-            self.gyroX,
-            self.gyroY,
-            self.F3[0],
-        )
+            self.gyro_x,
+            self.gyro_y)
+
+
+def get_linux_setup():
+    """
+    Returns hidraw device path and headset serial number.
+    """
+    raw_inputs = []
+    for filename in os.listdir("/sys/class/hidraw"):
+        real_path = check_output(["realpath", "/sys/class/hidraw/" + filename]).decode()
+        print(real_path)
+        split_path = real_path.split('/')
+        s = len(split_path)
+        s -= 4
+        i = 0
+        path = ""
+        while s > i:
+            path = path + split_path[i] + "/"
+            i += 1
+        raw_inputs.append([path, filename])
+    for input in raw_inputs:
+        try:
+            with open(input[0] + "/manufacturer", 'r') as f:
+                manufacturer = f.readline()
+                f.close()
+            if "Emotiv Systems" in manufacturer:
+                with open(input[0] + "/serial", 'r') as f:
+                    serial = f.readline().strip()
+                    f.close()
+                print("Serial: " + serial + " Device: " + input[1])
+                # Great we found it. But we need to use the second one...
+                hidraw = input[1]
+                hidraw_id = int(hidraw[-1])
+                # The dev headset might use the first device, or maybe if more than one are connected they might.
+                hidraw_id += 1
+                hidraw = "hidraw" + hidraw_id.__str__()
+                print("Serial: " + serial + " Device: " + hidraw + " (Active)")
+                return [serial, hidraw, ]
+        except IOError as e:
+            print("Couldn't open file: %s" % e)
 
 
 class Emotiv(object):
+
     def __init__(self, displayOutput=False, headsetId=0, research_headset=True):
-        print("IN INIT")
         self._goOn = True
         self.packets = Queue()
         self.packetsReceived = 0
@@ -364,19 +324,69 @@ class Emotiv(object):
                 else:
                     os.system('clear')
                 print(
-                    "Packets Received: %s Packets Processed: %s" %
-                    self.packetsReceived, self.packetsProcessed)
+                    "Packets Received: {} Packets Processed: {}".format(
+                        self.packetsReceived, self.packetsProcessed))
                 print('\n'.join(
-                    "%s Reading: %s Strength: %s" %
-                    (k[1], self.sensors[k[1]]['value'],
+                    "{} Reading: {} Strength: {}".format(
+                        k[1], self.sensors[k[1]]['value'],
                         self.sensors[k[1]]['quality'])
                     for k in enumerate(self.sensors)))
-                print("Battery: %i" % g_battery)
+                print("Battery:", g_battery)
+
+    def setup_posix(self):
+        """
+        Setup for headset on the Linux platform.
+        Receives packets from headset and sends them to a Queue to be processed
+        by the crypto greenlet.
+        """
+        self._os_decryption = False
+        if os.path.exists('/dev/eeg/raw'):
+            self._os_decryption = True
+            print("/dev/eeg/raw")
+            hidraw = open("/dev/eeg/raw", 'rb')
+        else:
+            serial, hidraw_filename = get_linux_setup()
+            self.serial_number = serial
+            if os.path.exists("/dev/" + hidraw_filename):
+                print("/dev/" + hidraw_filename)
+                hidraw = open("/dev/" + hidraw_filename, 'rb')
+            else:
+                print("/dev/hidraw4")
+                hidraw = open("/dev/hidraw4", 'rb')
+            self.running = True
+            self.device = hidraw
+
+    @asyncio.coroutine
+    def read_data_linux(self):
+        self.packets_received = 0
+        while self.running:
+            try:
+                data = self.device.read(32)
+                if data:
+                    if self._os_decryption:
+                        self.packets.put_nowait(EmotivPacket(data))
+                    else:
+                        # Queue it
+                        self.packets_received += 1
+                        tasks.put_nowait(data)
+                else:
+                    # No new data from the device; yield
+                    # We cannot sleep(0) here because that would go 100% CPU if both queues are empty
+                    # gevent.sleep(DEVICE_POLL_INTERVAL)
+                    yield from asyncio.sleep(2)
+            except KeyboardInterrupt:
+                self.running = False
+        self.device.close()
+        print(tasks.qsize())
+        # print(temp_data)
+        # return temp_data
+        # if not self._os_decryption:
+        #     gevent.kill(crypto, KeyboardInterrupt)
+        # gevent.kill(console_updater, KeyboardInterrupt)
 
     def setupWin(self):
         devices = []
         temp_data = []
-        print("GETINg devices")
         try:
             len(hid.find_all_hid_devices())
             for device in hid.find_all_hid_devices():
@@ -403,39 +413,47 @@ class Emotiv(object):
         self.packetsReceived += 1
         return True
 
-    def setupCrypto(self, sn):
+    @asyncio.coroutine
+    def setupCrypto(self):
         k = ['\0'] * 16
-        k[0] = sn[-1]
+        k[0] = self.serial_number[-1]
         k[1] = '\0'
-        k[2] = sn[-2]
+        k[2] = self.serial_number[-2]
         k[3] = 'T'
-        k[4] = sn[-3]
+        k[4] = self.serial_number[-3]
         k[5] = '\x10'
-        k[6] = sn[-4]
+        k[6] = self.serial_number[-4]
         k[7] = 'B'
-        k[8] = sn[-1]
+        k[8] = self.serial_number[-1]
         k[9] = '\0'
-        k[10] = sn[-2]
+        k[10] = self.serial_number[-2]
         k[11] = 'H'
-        k[12] = sn[-3]
+        k[12] = self.serial_number[-3]
         k[13] = '\0'
-        k[14] = sn[-4]
+        k[14] = self.serial_number[-4]
         k[15] = 'P'
         key = ''.join(k)
-        # print key
+        print(key)
+        for i in k:
+            print("0x%.02x " % (ord(i)))
         iv = Random.new().read(AES.block_size)
         cipher = AES.new(key, AES.MODE_ECB, iv)
         vector = [0 for i in range(17)]
         i = 0
         while self._goOn:
             while not tasks.empty():
-                if i == 10:
-                    result = []
-                    for bit in vector:
-                        result.append(bit/10)
-                    return result
-                task = tasks.get()
+                # print(i)
+                # if i == 10:
+                #     result = []
+                #     for bit in vector:
+                #         result.append(bit/10)
+                #     return result
+                task = yield from tasks.get()
+
+
+
                 data = cipher.decrypt(task[:16]) + cipher.decrypt(task[16:])
+                print(data)
                 self.lastPacket = EmotivPacket(data, self.sensors)
                 self.packets.put_nowait(self.lastPacket)
                 self.packetsProcessed += 1
@@ -446,8 +464,8 @@ class Emotiv(object):
                     vector[k[0]] += self.sensors[k[1]]['value']
                 i += 1
                 # print vector
-                time.sleep(1)
-                # edit time step here
+                print(vector)
+
 
     def dequeue(self):
         try:
@@ -459,8 +477,19 @@ if __name__ == "__main__":
     print("START")
     try:
         a = Emotiv()
-        a.setupWin()
+        # a.setupWin()
+        # a.setup_posix()
         print("HERE")
-        # temp_data = a.setupWin()
+        loop = asyncio.get_event_loop()
+        a.setup_posix()
+        tasks_to_async = [
+
+            asyncio.ensure_future(a.read_data_linux()),
+            asyncio.ensure_future(a.setupCrypto()),
+            ]
+        finished, pending = loop.run_until_complete(
+            asyncio.wait(tasks_to_async, return_when=asyncio.FIRST_COMPLETED))
+
     except KeyboardInterrupt:
         a.device.close()
+        loop.close()
