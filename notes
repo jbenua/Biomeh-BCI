@@ -1,0 +1,13 @@
+notes:
+
+battery
+________
+if we set a filter like 0.2 Hz, there is a possibility,
+that we never get a packet with data about battery.
+Maybe i should make a button - 
+
+press ->
+in a coro poll_interval is set to a 200Hz, for example ->
+wait for battery to update ->
+poll_interval is set back ->
+end of coro

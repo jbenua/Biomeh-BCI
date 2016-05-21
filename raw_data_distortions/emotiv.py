@@ -7,9 +7,6 @@ from subprocess import check_output
 import datetime
 
 
-DEVICE_POLL_INTERVAL = 2
-SCREEN_UPDATE_INTERVAL = 0.005
-
 sensor_bits = {
     'F3': [10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7],
     'FC5': [28, 29, 30, 31, 16, 17, 18, 19, 20, 21, 22, 23, 8, 9],
@@ -196,10 +193,8 @@ def get_level(data, bits):
     level = 0
     for i in range(13, -1, -1):
         level <<= 1
-        # new division in python3:
-        # (bits[i] / 8) + 1, bits[i] % 8
         b, o = (bits[i] // 8) + 1, bits[i] % 8
-        level |= (data[b] >> o) & 1  # (ord(data[b]) >> o) & 1
+        level |= (data[b] >> o) & 1
     return level
 
 
@@ -356,21 +351,20 @@ class EmotivPacket(object):
             self.gyro_y)
 
 
-class Emotiv(object):
+class Emotiv():
     """
     Receives, decrypts and stores packets received from Emotiv Headsets.
     """
-    def __init__(self, display_output=True,
-                serial_number="", is_research=False):
+    def __init__(self, display_output=False,
+                serial_number="", is_research=False, filter=25):
         """
         Sets up initial values.
         """
         self.running = True
         self.packets = Queue()
-        self.packets_received = 0
-        self.packets_processed = 0
         self.battery = 0
-        self.display_output = False
+        self.display_output = display_output
+        self.poll_interval = 1 / filter
         self.is_research = is_research
         self.sensors = {
             'F3': {'value': 0, 'quality': 0},
@@ -395,9 +389,9 @@ class Emotiv(object):
         self.old_model = False
 
     async def setup(self):
-        _os_decryption = False
+        self._os_decryption = False
         if os.path.exists('/dev/eeg/raw'):
-            _os_decryption = True
+            self._os_decryption = True
             path = "/dev/eeg/raw"
         else:
             serial, hidraw_filename = get_linux_setup()
@@ -406,26 +400,24 @@ class Emotiv(object):
                 path = "/dev/" + hidraw_filename
             else:
                 path = "/dev/hidraw4"
+        self.device_path = path
+        self.setup_crypto(self.serial_number)
 
-        with open(path, 'rb') as hidraw:
-            self.running = True
-            self.setup_crypto(self.serial_number)
+    async def read_data(self):
+        self.running = True
+        with open(self.device_path, 'rb') as hidraw:
             while self.running:
                 try:
                     data = hidraw.read(32)
                     if data != "":
-                        if _os_decryption:
+                        if self._os_decryption:
                             self.packets.put_nowait(EmotivPacket(data))
                         else:
-                            # Queue it!
-                            self.packets_received += 1
                             tasks.put_nowait(data)
                     await self.process_tasks()
-                    await sleep(DEVICE_POLL_INTERVAL)
+                    await sleep(self.poll_interval)
                 except KeyboardInterrupt:
                     self.running = False
-                except Exception as e:
-                    print(e)
             hidraw.close()
 
     def setup_crypto(self, sn):
@@ -476,7 +468,6 @@ class Emotiv(object):
                     self.cipher.decrypt(task[16:]))
                 self.packets.put_nowait(
                     EmotivPacket(data, self.sensors, self.old_model))
-                self.packets_processed += 1
             except Exception as e:
                 print(type(e), e)
 
@@ -487,37 +478,33 @@ class Emotiv(object):
         self.running = False
 
     async def update_console(self):
-        print("in update")
         while self.running:
             if self.display_output:
                 packet = await self.packets.get()
-                # print(packet)
+                print(packet)
                 # print('\n'.join("%s Reading: %s Quality: %s" %
                 #     (k[1], self.sensors[k[1]]['value'],
                 #         self.sensors[k[1]]['quality'])
                 #     for k in enumerate(self.sensors)))
-                a = ["{}".format(
-                    self.sensors[k]['value'])
-                    for k in ['F3', 'FC6', 'P7']]
-                print(datetime.datetime.now(), a[0], a[1], a[2])
-                await sleep(SCREEN_UPDATE_INTERVAL)
-        print("return")
+                await sleep(self.poll_interval)
+
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    a = Emotiv()
+    filter_hz = 1
+    a = Emotiv(display_output=True, filter=filter_hz)
+    loop.run_until_complete(a.setup())
     a.running = True
-    a.display_output = True
     try:
         loop_tasks = [
-            asyncio.ensure_future(a.setup()),
+            asyncio.ensure_future(a.read_data()),
             asyncio.ensure_future(a.update_console())
         ]
-        loop.run_until_complete(asyncio.wait(loop_tasks))
-        loop.close()
+        finished, pending = loop.run_until_complete(asyncio.wait(loop_tasks))
 
-        # loop.run_until_complete(a.setup())
-        # a.setup()
     except KeyboardInterrupt:
-        a.close()
-        loop.close()
+        a.running = False
+        for task in pending:
+            task.cancel()
+    loop.close()
+    a.close()
