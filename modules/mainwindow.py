@@ -62,12 +62,14 @@ class MainWindow(QMainWindow):
 
     def setup_device(self):
         """Connect device to ui"""
-        # TODO: init device
         if sys.argv[1] == 'test':
             device = MagicMock()
+            self.set_battery(45)
         else:
+            # TODO: init device here
             device = None
-        #
+            battery = 0
+            self.set_battery(0)
         if device:
             self.status.setText("OK")
             self.status.setStyleSheet("color: green")
@@ -81,6 +83,15 @@ class MainWindow(QMainWindow):
         """Change a filter for Emotiv"""
         ...
         # TODO: implement
+
+    def set_battery(self, level):
+        self.battery_level.setText(str(level))
+        if 50 <= level <= 100:
+            self.battery_level.setStyleSheet('color: green')
+        elif level >= 30:
+            self.battery_level.setStyleSheet('color: orange')
+        else:
+            self.battery_level.setStyleSheet('color: red')
 
     def unset_echo_filter(self):
         """Display real-time value change in input"""
