@@ -1,11 +1,12 @@
 from PyQt4 import uic
 from PyQt4.QtGui import QMainWindow, QPixmap
 from PyQt4.QtCore import QObject, SIGNAL
-
-from .login import LoginDialog
 import numpy as np
 import pyqtgraph as pg
 import sys
+from unittest.mock import MagicMock
+
+from .login import LoginDialog
 
 MAINWINDOW_UI = './ui/main_window.ui'
 GO_LEFT_PIC = './img/go_left.png'
@@ -45,11 +46,57 @@ class MainWindow(QMainWindow):
         QObject.connect(
             self.login_dialog, SIGNAL("logged()"), self._draw_main_window)
         QMainWindow.__init__(self)
+
         self.user = current_user
         uic.loadUi(MAINWINDOW_UI, self)
-        self.errors.hide()
+
+
+        self.setup_device()
+
+        self.filter_apply_button.clicked.connect(self.change_filter)
+        self.filter_slider.sliderPressed.connect(self.set_echo_filter)
+        self.filter_slider.sliderReleased.connect(self.unset_echo_filter)
+        self.filter_value_edit.textEdited.connect(self.update_slider_val)
         self._log_in()
         self.ptr = 0
+
+    def setup_device(self):
+        """Connect device to ui"""
+        # TODO: init device
+        if sys.argv[1] == 'test':
+            device = MagicMock()
+        else:
+            device = None
+        #
+        if device:
+            self.status.setText("OK")
+            self.status.setStyleSheet("color: green")
+        else:
+            self.status.setText("NO DEVICE")
+            self.status.setStyleSheet("color: red")
+
+        self.device = device
+
+    def change_filter(self):
+        """Change a filter for Emotiv"""
+        ...
+        # TODO: implement
+
+    def unset_echo_filter(self):
+        """Display real-time value change in input"""
+        self.filter_slider.valueChanged.disconnect(self.update_slider_inp)
+
+    def set_echo_filter(self):
+        """Stop displaying"""
+        self.filter_slider.valueChanged.connect(self.update_slider_inp)
+
+    def update_slider_val(self):
+        """Set slider to position, defined in input"""
+        self.filter_slider.setValue(float(self.filter_value_edit.text()) * 2)
+
+    def update_slider_inp(self):
+        """Set input value to the one correcponding to slider"""
+        self.filter_value_edit.setText(str(self.filter_slider.value() / 2))
 
     def _log_in(self):
         self.login_dialog.show()
@@ -85,6 +132,7 @@ class MainWindow(QMainWindow):
 
         self.timer = pg.QtCore.QTimer()
         self.timer.timeout.connect(self.update_curves)
+
 
         # test sync
 
