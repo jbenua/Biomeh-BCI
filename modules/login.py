@@ -1,22 +1,9 @@
-from PyQt4 import uic
-from PyQt4.QtCore import SIGNAL
-from PyQt4.QtGui import QDialog
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QDialog, QMessageBox
 from . import User
-import sys
 
 LOGIN_UI = './ui/login_dialog.ui'
-
-
-def get_test_data():
-    raise NotImplementedError
-
-
-def show_results():
-    raise NotImplementedError
-
-
-def read_data():
-    raise NotImplementedError
 
 
 class Login():
@@ -53,19 +40,16 @@ class Login():
 
 
 class LoginDialog(QDialog, Login):
+    logged = pyqtSignal()
+    
     def __init__(self, current_user):
         QDialog.__init__(self)
         self.user = current_user
         uic.loadUi(LOGIN_UI, self)
-        self.error.hide()
         self.start_button.clicked.connect(self.on_start_button)
 
     def display_error(self, error="DEFAULT ERROR MSG"):
-        """display error msg at the bottom of the dialog"""
-        if not self.error.isVisible():
-            self.resize(self.width(), self.height()+15)
-        self.error.setText(error)
-        self.error.show()
+        QMessageBox.critical(self, "Error", error)
 
     def on_start_button(self):
         """start_button singal catched"""
@@ -77,22 +61,10 @@ class LoginDialog(QDialog, Login):
 
             if not self.sign_up(username, password):
                 return
-        # log in
 
         if not self.log_in(username, password):
             return
         self.user.fill_info(username, password)
-        self.emit(SIGNAL("logged()"))
-        # create main window here
+        self.logged.emit()
         self.close()
-        return
-        # maybe quit here
-
-        if sys.argv[1] == 'test':
-            get_test_data()
-        else:
-            read_data()
-        show_results()
-
-        self.display_error("error: device not found")
         return

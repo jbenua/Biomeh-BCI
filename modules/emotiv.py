@@ -257,7 +257,7 @@ def is_old_model(serial_number):
         return True
 
 
-class EmotivPacket(object):
+class EmotivPacket:
     """
     Basic semantics for input bytes.
     """
@@ -351,21 +351,23 @@ class EmotivPacket(object):
             self.gyro_y)
 
 
-class Emotiv():
+class Emotiv:
     """
     Receives, decrypts and stores packets received from Emotiv Headsets.
     """
     def __init__(self, display_output=False,
-                serial_number="", is_research=False, filter=25):
+                serial_number="", is_research=False, filter=25, pointer=0):
         """
         Sets up initial values.
         """
         self.running = True
         self.packets = Queue()
+        self.data_to_send = Queue()
         self.battery = 0
         self.display_output = display_output
         self.poll_interval = 1 / filter
         self.is_research = is_research
+        self.ptr = pointer
         self.sensors = {
             'F3': {'value': 0, 'quality': 0},
             'FC6': {'value': 0, 'quality': 0},
@@ -407,6 +409,7 @@ class Emotiv():
         self.running = True
         with open(self.device_path, 'rb') as hidraw:
             while self.running:
+                print('reading')
                 try:
                     data = hidraw.read(32)
                     if data != "":
@@ -414,6 +417,8 @@ class Emotiv():
                             self.packets.put_nowait(EmotivPacket(data))
                         else:
                             tasks.put_nowait(data)
+                    self.ptr += 1
+                    print(self.ptr)
                     await self.process_tasks()
                     await sleep(self.poll_interval)
                 except KeyboardInterrupt:
@@ -466,8 +471,9 @@ class Emotiv():
             try:
                 data = (self.cipher.decrypt(task[:16]) +
                     self.cipher.decrypt(task[16:]))
-                self.packets.put_nowait(
-                    EmotivPacket(data, self.sensors, self.old_model))
+                packet = EmotivPacket(data, self.sensors, self.old_model)
+                self.packets.put_nowait(packet)
+                self.data_to_send.put_nowait(packet)
             except Exception as e:
                 print(type(e), e)
 

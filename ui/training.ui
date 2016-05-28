@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>Dialog</class>
  <widget class="QDialog" name="Dialog">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -12,6 +15,9 @@
   </property>
   <property name="windowTitle">
    <string>Training</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
   </property>
   <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
@@ -28,6 +34,8 @@
       <property name="font">
        <font>
         <pointsize>14</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
        </font>
       </property>
       <property name="placeholderText">
@@ -85,6 +93,13 @@
    </layout>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>start_button</tabstop>
+  <tabstop>stop_button</tabstop>
+  <tabstop>title_input</tabstop>
+  <tabstop>save_button</tabstop>
+  <tabstop>discard_button</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

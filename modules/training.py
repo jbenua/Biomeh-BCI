@@ -1,7 +1,7 @@
-from PyQt4 import uic
-from PyQt4.QtGui import QDialog
+from PyQt5 import uic
+from PyQt5.QtWidgets import QDialog
 import sys
-from PyQt4.QtGui import *
+from PyQt5.QtWidgets import *
 
 UI = './ui/training.ui'
 
@@ -41,11 +41,11 @@ class TrainingDialog(QDialog):
     def on_ok(self):
         """ok button clicked"""
         if not self.title_input.text():
-            QMessageBox.critical(self, "Error", 'Incorrect user or password')
+            QMessageBox.critical(self, "Error", 'Title is required')
         else:
             pass
             # save data
-            # close dialogf
+            # close dialog
 
     def on_cancel(self):
         """cancel button clicked"""
@@ -58,7 +58,8 @@ class TrainingDialog(QDialog):
                 self.close()
 
 
-app = QApplication(sys.argv)
-d = TrainingDialog()
-d.show()
-sys.exit(app.exec_())
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    d = TrainingDialog()
+    d.show()
+    sys.exit(app.exec_())

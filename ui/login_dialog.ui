@@ -47,7 +47,7 @@
      <x>10</x>
      <y>10</y>
      <width>301</width>
-     <height>121</height>
+     <height>123</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -143,6 +143,12 @@
    </layout>
   </widget>
  </widget>
+ <tabstops>
+  <tabstop>login_input</tabstop>
+  <tabstop>password_input</tabstop>
+  <tabstop>start_button</tabstop>
+  <tabstop>new_user_checkbox</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

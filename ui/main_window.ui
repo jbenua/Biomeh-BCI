@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>860</width>
-    <height>523</height>
+    <width>874</width>
+    <height>584</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -29,8 +29,8 @@
      <rect>
       <x>13</x>
       <y>12</y>
-      <width>836</width>
-      <height>501</height>
+      <width>850</width>
+      <height>561</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout_6">
@@ -44,15 +44,20 @@
        </property>
        <property name="styleSheet">
         <string notr="true">QTabBar::tab {
-	height: 40px}
+	height: 40px;
+	width: 300px;
+}
 QTabWidget:pane {
 	border: 1px solid #C1C0C4;
-	padding: 0;
 	margin: 1;	
 	border-radius: 2px;
 	border-top-left-radius: 0px;
 }
+
 </string>
+       </property>
+       <property name="tabPosition">
+        <enum>QTabWidget::North</enum>
        </property>
        <property name="currentIndex">
         <number>0</number>
@@ -63,6 +68,9 @@ QTabWidget:pane {
          <height>30</height>
         </size>
        </property>
+       <property name="usesScrollButtons">
+        <bool>false</bool>
+       </property>
        <widget class="QWidget" name="plot_tab">
         <attribute name="title">
          <string>Plot</string>
@@ -72,8 +80,8 @@ QTabWidget:pane {
           <rect>
            <x>10</x>
            <y>10</y>
-           <width>581</width>
-           <height>441</height>
+           <width>571</width>
+           <height>491</height>
           </rect>
          </property>
          <property name="minimumSize">
@@ -91,6 +99,309 @@ QTabWidget:pane {
         <attribute name="title">
          <string>Setup</string>
         </attribute>
+        <widget class="QWidget" name="layoutWidget">
+         <property name="geometry">
+          <rect>
+           <x>60</x>
+           <y>10</y>
+           <width>481</width>
+           <height>421</height>
+          </rect>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="QGroupBox" name="groupBox_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>70</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="sizeIncrement">
+             <size>
+              <width>0</width>
+              <height>2</height>
+             </size>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="title">
+             <string>Sensors to display</string>
+            </property>
+            <widget class="QWidget" name="layoutWidget">
+             <property name="geometry">
+              <rect>
+               <x>20</x>
+               <y>50</y>
+               <width>451</width>
+               <height>281</height>
+              </rect>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <layout class="QGridLayout" name="gridLayout">
+              <item row="2" column="0">
+               <widget class="QCheckBox" name="check_f3">
+                <property name="text">
+                 <string>F3</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QCheckBox" name="check_af3">
+                <property name="text">
+                 <string>AF3</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QCheckBox" name="check_af4">
+                <property name="text">
+                 <string>AF4</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QCheckBox" name="check_f7">
+                <property name="text">
+                 <string>F7</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QCheckBox" name="check_f4">
+                <property name="text">
+                 <string>F4</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QCheckBox" name="check_o2">
+                <property name="text">
+                 <string>O2</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QCheckBox" name="check_p7">
+                <property name="text">
+                 <string>P7</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QCheckBox" name="check_p8">
+                <property name="text">
+                 <string>P8</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="2">
+               <widget class="QCheckBox" name="check_t7">
+                <property name="text">
+                 <string>T7</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="2">
+               <widget class="QCheckBox" name="check_t8">
+                <property name="text">
+                 <string>T8</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QCheckBox" name="check_fc5">
+                <property name="text">
+                 <string>FC5</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QCheckBox" name="check_fc6">
+                <property name="text">
+                 <string>FC6</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QCheckBox" name="check_o1">
+                <property name="text">
+                 <string>O1</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="2">
+               <widget class="QCheckBox" name="check_un">
+                <property name="text">
+                 <string>UN</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="2">
+               <widget class="QCheckBox" name="check_y">
+                <property name="text">
+                 <string>Y</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="2">
+               <widget class="QCheckBox" name="check_x">
+                <property name="text">
+                 <string>X</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QCheckBox" name="check_f8">
+                <property name="text">
+                 <string>F8</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="2">
+               <widget class="QPushButton" name="change_sensors_button">
+                <property name="maximumSize">
+                 <size>
+                  <width>120</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="text">
+                 <string>Apply</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QPushButton" name="train_button">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>70</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>70</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Train something new</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="model_button">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>70</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>70</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">color: grey</string>
+              </property>
+              <property name="text">
+               <string>Change model (Advanced)</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </widget>
      </item>
@@ -169,8 +480,17 @@ QTabWidget:pane {
              <height>35</height>
             </size>
            </property>
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
            <property name="text">
             <string>Log out</string>
+           </property>
+           <property name="flat">
+            <bool>false</bool>
            </property>
           </widget>
          </item>
@@ -199,7 +519,7 @@ QTabWidget:pane {
          <property name="title">
           <string/>
          </property>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <property name="geometry">
            <rect>
             <x>13</x>
@@ -475,8 +795,6 @@ QTabWidget:pane {
            </item>
           </layout>
          </widget>
-         <zorder>layoutWidget</zorder>
-         <zorder></zorder>
         </widget>
        </item>
        <item>
@@ -514,8 +832,6 @@ QTabWidget:pane {
      </item>
     </layout>
    </widget>
-   <zorder>layoutWidget</zorder>
-   <zorder></zorder>
   </widget>
  </widget>
  <customwidgets>

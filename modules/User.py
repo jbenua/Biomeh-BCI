@@ -1,4 +1,4 @@
-from emotiv import Emotiv
+from .emotiv import Emotiv
 from sklearn import svm
 from peewee import *
 import scikit_test
