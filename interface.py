@@ -9,22 +9,11 @@ from modules.User import User
 
 ICON = "img/emotiv_icon.png"
 
-# set icons everywhere
-
 if __name__ == "__main__":
-    # root = Tk()
-    # icon = PhotoImage(file=ICON)
-    # root.tk.call('wm', 'iconphoto', root._w, icon)
-    # root.title("Biomeh")
     user = User()
-    # ss = StartScreen(root, user)
-    # root.mainloop()
-
-    loop = asyncio.get_event_loop()
-    # pyqt
     app = QApplication(sys.argv)
     loop = quamash.QEventLoop(app)
-    asyncio.set_event_loop(loop) 
+    asyncio.set_event_loop(loop)
 
     main_window = MainWindow(user, loop)
     loop.run_until_complete(main_window.setup_device())

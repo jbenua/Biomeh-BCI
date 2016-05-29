@@ -56,11 +56,13 @@ class MagicEmotiv:
         self.battery = 40
         self.packets = Queue()
         self.ptr = ptr
-        self.upd_int = upd_interval
+        self.poll_interval = upd_interval
+
+    def set_filter(self, value):
+        self.poll_interval = 1 / value
 
     async def setup(self):
         print("creating magic emotiv...")
-        await asyncio.sleep(4)
 
     async def read_data(self):
         while self.running:
@@ -75,14 +77,14 @@ class MagicEmotiv:
                 s, False)
             self.packets.put_nowait(packet)
             self.data_to_send.put_nowait(packet)
-            self.ptr +=1
-            await asyncio.sleep(self.upd_int)
+            self.ptr += 1
+            await asyncio.sleep(self.poll_interval)
 
     async def update_console(self):
         while self.running:
             packet = await self.packets.get()
             print(packet)
-            await asyncio.sleep(self.upd_int)
+            await asyncio.sleep(self.poll_interval)
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()

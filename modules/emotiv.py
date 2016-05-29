@@ -355,8 +355,10 @@ class Emotiv:
     """
     Receives, decrypts and stores packets received from Emotiv Headsets.
     """
-    def __init__(self, display_output=False,
-                serial_number="", is_research=False, filter=25, pointer=0):
+
+    def __init__(
+            self, display_output=False, serial_number="",
+            is_research=False, filter_hz=25, pointer=0):
         """
         Sets up initial values.
         """
@@ -365,7 +367,7 @@ class Emotiv:
         self.data_to_send = Queue()
         self.battery = 0
         self.display_output = display_output
-        self.poll_interval = 1 / filter
+        self.poll_interval = 1 / filter_hz
         self.is_research = is_research
         self.ptr = pointer
         self.sensors = {
@@ -390,6 +392,9 @@ class Emotiv:
         self.serial_number = serial_number
         self.old_model = False
 
+    def set_filter(self, value):
+        self.poll_interval = 1 / value
+
     async def setup(self):
         self._os_decryption = False
         if os.path.exists('/dev/eeg/raw'):
@@ -409,7 +414,6 @@ class Emotiv:
         self.running = True
         with open(self.device_path, 'rb') as hidraw:
             while self.running:
-                print('reading')
                 try:
                     data = hidraw.read(32)
                     if data != "":
@@ -418,7 +422,6 @@ class Emotiv:
                         else:
                             tasks.put_nowait(data)
                     self.ptr += 1
-                    print(self.ptr)
                     await self.process_tasks()
                     await sleep(self.poll_interval)
                 except KeyboardInterrupt:
@@ -469,7 +472,8 @@ class Emotiv:
         while not tasks.empty():
             task = await tasks.get()
             try:
-                data = (self.cipher.decrypt(task[:16]) +
+                data = (
+                    self.cipher.decrypt(task[:16]) +
                     self.cipher.decrypt(task[16:]))
                 packet = EmotivPacket(data, self.sensors, self.old_model)
                 self.packets.put_nowait(packet)

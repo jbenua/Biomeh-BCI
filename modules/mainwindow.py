@@ -1,7 +1,7 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import QObject, pyqtSignal
+# from PyQt5.QtCore import QObject, pyqtSignal
 import numpy as np
 import pyqtgraph as pg
 import sys
@@ -9,13 +9,12 @@ import asyncio
 
 from .login import LoginDialog
 from .training import TrainingDialog
-from .emotiv import Emotiv, EmotivPacket
-from .tests.magic_emotiv import MagicEmotiv, MagicPacket
+from .emotiv import Emotiv
+from .tests.magic_emotiv import MagicEmotiv
 
 MAINWINDOW_UI = './ui/main_window.ui'
 GO_LEFT_PIC = './img/go_left.png'
 GO_RIGHT_PIC = './img/go_right.png'
-UPDATE_INTERVAL = 0.25
 
 # TODO: add curve- and timeout- and buffer size selectors
 
@@ -93,12 +92,14 @@ SENSORS = {
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, current_user, loop):
+    def __init__(self, current_user, loop, filter_hz=0.5):
         self.sensors = list(SENSORS.keys())
         self.curves = {}
         self.data = {name: np.empty(100) for name in self.sensors}
         self.login_dialog = LoginDialog(current_user)
         self.loop = loop
+        self.filter_hz = filter_hz
+        self.update_interval = 1 / filter_hz
         QMainWindow.__init__(self)
 
         self.user = current_user
@@ -122,10 +123,10 @@ class MainWindow(QMainWindow):
         """Connect device to ui"""
         self.ptr = 0
         if len(sys.argv) > 1:
-            device = MagicEmotiv(self.ptr, UPDATE_INTERVAL)
+            device = MagicEmotiv(self.ptr, self.filter_hz)
         else:
-            device = Emotiv(display_output=True, filter=0.5, pointer=self.ptr)
-
+            device = Emotiv(
+                display_output=True, filter=self.filter_hz, pointer=self.ptr)
         await device.setup()
         device.running = True
         self.set_battery(device.battery)
@@ -140,8 +141,12 @@ class MainWindow(QMainWindow):
 
     def change_filter(self):
         """Change a filter for Emotiv"""
-        ...
-        # TODO: implement
+        try:
+            new_val = float(self.filter_value_edit.text())
+            self.update_interval = 1 / new_val
+            self.device.set_filter(new_val)
+        except Exception as e:
+            print(e)
 
     def set_battery(self, level):
         self.battery_level.setText(str(level))
@@ -240,7 +245,7 @@ class MainWindow(QMainWindow):
                 for sensor in self.curves:
                     self.curves[sensor].setData(self.data[sensor][:ptr])
                 self.raw_data.setXRange(ptr - 100, ptr + 8)
-                await asyncio.sleep(UPDATE_INTERVAL)
+                await asyncio.sleep(self.update_interval)
 
     async def check_buffer(self):
         print("check_buffer")
@@ -273,6 +278,5 @@ class MainWindow(QMainWindow):
                 min_ = packet.sensors[key]['value']
             if packet.sensors[key]['value'] > max_:
                 max_ = packet.sensors[key]['value']
-        space = abs(min_) + abs(max_)/10
+        space = abs(min_) + abs(max_) / 20
         self.raw_data.setYRange(min_ - space, max_ + space)
-
