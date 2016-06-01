@@ -15,7 +15,7 @@ if __name__ == "__main__":
     loop = quamash.QEventLoop(app)
     asyncio.set_event_loop(loop)
 
-    main_window = MainWindow(user, loop)
+    main_window = MainWindow(user, loop, 5)
     loop.run_until_complete(main_window.setup_device())
     try:
         loop_tasks = [

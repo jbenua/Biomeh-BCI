@@ -1,11 +1,11 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QMainWindow
 from PyQt5.QtGui import QPixmap
-# from PyQt5.QtCore import QObject, pyqtSignal
 import numpy as np
 import pyqtgraph as pg
 import sys
 import asyncio
+import datetime
 
 from .login import LoginDialog
 from .training import TrainingDialog
@@ -106,6 +106,8 @@ class MainWindow(QMainWindow):
         uic.loadUi(MAINWINDOW_UI, self)
 
         self.train_button.clicked.connect(self.train)
+        if self.filter_hz != 0.5:
+            self.set_filter_vals()
         self.filter_apply_button.clicked.connect(self.change_filter)
         self.filter_slider.sliderPressed.connect(self.set_echo_filter)
         self.filter_slider.sliderReleased.connect(self.unset_echo_filter)
@@ -123,10 +125,10 @@ class MainWindow(QMainWindow):
         """Connect device to ui"""
         self.ptr = 0
         if len(sys.argv) > 1:
-            device = MagicEmotiv(self.ptr, self.filter_hz)
+            device = MagicEmotiv(filter_hz=self.filter_hz)
         else:
             device = Emotiv(
-                display_output=True, filter=self.filter_hz, pointer=self.ptr)
+                display_output=True, filter_hz=self.filter_hz)
         await device.setup()
         device.running = True
         self.set_battery(device.battery)
@@ -141,12 +143,10 @@ class MainWindow(QMainWindow):
 
     def change_filter(self):
         """Change a filter for Emotiv"""
-        try:
-            new_val = float(self.filter_value_edit.text())
-            self.update_interval = 1 / new_val
-            self.device.set_filter(new_val)
-        except Exception as e:
-            print(e)
+        print("setting new filter...")
+        new_val = float(self.filter_value_edit.text())
+        self.update_interval = 1 / new_val
+        self.device.set_filter(new_val)
 
     def set_battery(self, level):
         self.battery_level.setText(str(level))
@@ -156,6 +156,11 @@ class MainWindow(QMainWindow):
             self.battery_level.setStyleSheet('color: orange')
         else:
             self.battery_level.setStyleSheet('color: red')
+
+    def set_filter_vals(self):
+        val = float(self.filter_hz)
+        self.filter_slider.setValue(val)
+        self.filter_value_edit.setText(str(val))
 
     def unset_echo_filter(self):
         """Display real-time value change in input"""
@@ -174,8 +179,6 @@ class MainWindow(QMainWindow):
         self.filter_value_edit.setText(str(self.filter_slider.value() / 2))
 
     async def _log_in(self):
-        # QObject.connect(
-        #     self.login_dialog, SIGNAL("logged()"), self._draw_main_window)
         self.login_dialog.show()
         self.login_dialog.exec_()
 
@@ -236,21 +239,22 @@ class MainWindow(QMainWindow):
         self.raw_data.setYRange(-5, 85)
 
     async def update_curves(self):
-
         ptr = -1
+        print("in update curves", self.device.running)
         while self.device.running:
+            print("update_cureves, running", self.device.running)
             if self.ptr != ptr:
                 ptr = self.ptr
                 print(ptr)
                 for sensor in self.curves:
                     self.curves[sensor].setData(self.data[sensor][:ptr])
                 self.raw_data.setXRange(ptr - 100, ptr + 8)
-                await asyncio.sleep(self.update_interval)
+            await asyncio.sleep(self.update_interval)
+        print("update_curves finished")
 
     async def check_buffer(self):
         print("check_buffer")
         if self.ptr >= self.data[self.sensors[0]].shape[0]:
-
             print("need more space")
             for sensor in self.data:
                 tmp = self.data[sensor]
@@ -261,14 +265,20 @@ class MainWindow(QMainWindow):
         packet = await self.device.data_to_send.get()
         for key in packet.sensors:
             self.data[key.lower()][self.ptr] = packet.sensors[key]['value']
-        self.set_range(packet)
         self.ptr += 1
+        print("sleep in read_1")
+        await asyncio.sleep(self.update_interval)
+        print("end sleep in read_1")
         while self.device.running:
+            print("got data", datetime.datetime.now())
             packet = await self.device.data_to_send.get()
             for key in packet.sensors:
                 self.data[key.lower()][self.ptr] = packet.sensors[key]['value']
             self.ptr += 1
+            print("sleep in read_2")
+            await asyncio.sleep(self.update_interval)
             await self.check_buffer()
+            print("end sleep in read_2")
 
     def set_range(self, packet):
         min_ = 0

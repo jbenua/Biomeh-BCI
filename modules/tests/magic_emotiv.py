@@ -1,4 +1,3 @@
-from unittest.mock import MagicMock
 import asyncio
 from asyncio import Queue
 import numpy as np
@@ -51,12 +50,12 @@ class MagicPacket:
 
 
 class MagicEmotiv:
-    def __init__(self, ptr, upd_interval):
+    def __init__(self, filter_hz=25):
         self.data_to_send = Queue()
         self.battery = 40
         self.packets = Queue()
-        self.ptr = ptr
-        self.poll_interval = upd_interval
+        self.poll_interval = 1 / filter_hz
+        self.running = True
 
     def set_filter(self, value):
         self.poll_interval = 1 / value
@@ -65,7 +64,10 @@ class MagicEmotiv:
         print("creating magic emotiv...")
 
     async def read_data(self):
+        print("magic: running", self.running)
         while self.running:
+            print("magic: running", self.running)
+            print(self.data_to_send.qsize())
             s = {}
             for shift, sensor in enumerate(sorted(sensor_bits, reverse=True)):
                 s[sensor] = {'quality': 0.0}
@@ -77,7 +79,6 @@ class MagicEmotiv:
                 s, False)
             self.packets.put_nowait(packet)
             self.data_to_send.put_nowait(packet)
-            self.ptr += 1
             await asyncio.sleep(self.poll_interval)
 
     async def update_console(self):
