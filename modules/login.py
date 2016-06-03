@@ -1,9 +1,11 @@
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QDialog, QMessageBox
-from . import User
+from .db_model import *
 
 LOGIN_UI = './ui/login_dialog.ui'
+
+# TODO: maybe add some default data if user is new?
 
 
 class Login():
@@ -12,36 +14,36 @@ class Login():
 
     def sign_up(self, username, password):
         """create new user's account"""
-        User.db.connect()
+        db.connect()
         if not username:
             self.display_error("Username is required")
             return False
         try:
-            User.users.get(User.users.username == username)
+            users.get(users.username == username)
             self.display_error("User already exists! Choose another username")
             return False
-        except User.users.DoesNotExist:
-            User.users.create(username=username, passwd=password)
+        except users.DoesNotExist:
+            users.create(username=username, passwd=password)
             return True
-        User.db.close()
+        db.close()
 
     def log_in(self, username, password):
         """try to log into the system"""
-        User.db.connect()
+        db.connect()
         try:
-            User.users.get(
-                User.users.username == username,
-                User.users.passwd == password)
-        except User.users.DoesNotExist:
+            users.get(
+                users.username == username,
+                users.passwd == password)
+        except users.DoesNotExist:
             self.display_error("Incorrect pair user-password!")
             return False
-        User.db.close()
+        db.close()
         return True
 
 
 class LoginDialog(QDialog, Login):
     logged = pyqtSignal()
-    
+
     def __init__(self, current_user):
         QDialog.__init__(self)
         self.user = current_user

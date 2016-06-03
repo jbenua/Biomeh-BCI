@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QApplication
 import asyncio
 import quamash
 
+from modules.db_model import db
 from modules.mainwindow import MainWindow
 from modules.User import User
 
@@ -10,7 +11,7 @@ from modules.User import User
 ICON = "img/emotiv_icon.png"
 
 if __name__ == "__main__":
-    user = User()
+    user = User(db)
     app = QApplication(sys.argv)
     loop = quamash.QEventLoop(app)
     asyncio.set_event_loop(loop)
