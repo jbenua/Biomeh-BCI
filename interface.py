@@ -10,13 +10,12 @@ from modules.User import User
 
 ICON = "img/emotiv_icon.png"
 
-if __name__ == "__main__":
-    user = User(db)
-    app = QApplication(sys.argv)
-    loop = quamash.QEventLoop(app)
-    asyncio.set_event_loop(loop)
 
-    main_window = MainWindow(user, loop, 5)
+def destroy():
+    return
+
+
+def run(loop, main_window):
     loop.run_until_complete(main_window.setup_device())
     try:
         loop_tasks = [
@@ -34,4 +33,15 @@ if __name__ == "__main__":
             task.cancel()
     main_window.device.close()
     sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    user = User(db)
+    app = QApplication(sys.argv)
+    loop = quamash.QEventLoop(app)
+    asyncio.set_event_loop(loop)
+
+    main_window = MainWindow(user, loop, 5)
+    main_window.should_close.connect(destroy)
+    main_window.goon.connect(run(loop, main_window))
+
     loop.close()

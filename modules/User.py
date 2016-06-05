@@ -85,9 +85,9 @@ class User:
     def fill_info(self, name, pswd):
         self.db.connect()
         self.username = name
-        get_id = users.get(
+        this_user = users.get(
             users.username == self.username, users.passwd == pswd)
-        self.userid = get_id.id
+        self.userid = this_user.id
         try:
             entries = sessions.select(
                 sessions.tag_id, sessions.raw_id).where(
@@ -110,9 +110,9 @@ class User:
         finally:
             self.db.close()
         self.classifier = svm.SVC()
-        self.classifier.fit(self.prev_data, self.prev_tags)
 
     def detect(self):
+        self.classifier.fit(self.prev_data, self.prev_tags)
         # test
         # self.current_session_raw = [
         #     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]

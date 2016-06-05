@@ -1,11 +1,13 @@
-from PyQt5 import uic
-from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtGui import QPixmap
 import numpy as np
 import pyqtgraph as pg
 import sys
 import asyncio
 import datetime
+from pathlib import Path
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QMainWindow
+# from PyQt5.QtGui import QPixmap
 
 from .login import LoginDialog
 from .training import TrainingDialog
@@ -13,11 +15,20 @@ from .emotiv import Emotiv
 from .tests.magic_emotiv import MagicEmotiv
 
 MAINWINDOW_UI = './ui/main_window.ui'
-GO_LEFT_PIC = './img/go_left.png'
-GO_RIGHT_PIC = './img/go_right.png'
+# GO_LEFT_PIC = './img/go_left.png'
+# GO_RIGHT_PIC = './img/go_right.png'
 
 # TODO: add curve- and timeout- and buffer size selectors
 
+QUALITY = {
+    0: 'grey',
+    1: 'red',
+    2: 'yellow',
+    3: 'green',
+    4: 'blue',
+    5: 'black',
+    6: 'orange'
+}
 
 SENSORS = {
     'f3': {
@@ -92,6 +103,9 @@ SENSORS = {
 
 
 class MainWindow(QMainWindow):
+    should_close = pyqtSignal()
+    goon = pyqtSignal()
+
     def __init__(self, current_user, loop, filter_hz=0.5):
         self.sensors = list(SENSORS.keys())
         self.curves = {}
@@ -114,7 +128,30 @@ class MainWindow(QMainWindow):
         self.filter_value_edit.textEdited.connect(self.update_slider_val)
         self.change_sensors_button.clicked.connect(self.change_sensor_list)
         self.login_dialog.logged.connect(self._draw_main_window)
+        self.login_dialog.close_only.connect(self.interrupt)
         self.loop.run_until_complete(self._log_in())
+
+    def interrupt(self):
+        """user didn't log in"""
+        self.should_close.emit()
+
+    def closeEvent(self, event):
+        # save logs
+        if len(sys.argv) > 2:
+            type_ = "_" + sys.argv[2]
+        else:
+            type_ = ''
+        path = str(Path('.').resolve())
+        filename = "{path}/logs/{date}_{user}{type_}.py".format(
+            path=path, date=str(datetime.datetime.now()),
+            user=self.user.username, type_=type_)
+        with open(filename, 'a') as file:
+            file.write('data = {')
+            for sensor in self.data:
+                file.write("'{}': [{}],\n".format(sensor, ', '.join([
+                    '%.2f' % float(val) for val in self.data[sensor]])))
+            file.write('}')
+        event.accept()
 
     def train(self):
         training_dialog = TrainingDialog()
@@ -157,6 +194,19 @@ class MainWindow(QMainWindow):
         else:
             self.battery_level.setStyleSheet('color: red')
 
+    def set_connection_levels(self, packet):
+        for sensor in packet.sensors:
+            has_value = packet.sensors[sensor].get('quality', None)
+            if has_value:
+
+                print("QUALITY", has_value, QUALITY.get(int(has_value), 4))
+                sensor_circle = getattr(self, sensor)
+                ss = '''
+                border: 1px solid black;
+                border-radius: 15px;
+                background: {};'''.format(QUALITY[int(has_value / 2)])
+                sensor_circle.setStyleSheet(ss)
+
     def set_filter_vals(self):
         val = float(self.filter_hz)
         self.filter_slider.setValue(val)
@@ -182,17 +232,17 @@ class MainWindow(QMainWindow):
         self.login_dialog.show()
         self.login_dialog.exec_()
 
-    def _init_pixmaps(self):
-        self.left_pixmap = QPixmap(GO_LEFT_PIC).scaledToWidth(
-            self.walking_man.width())
-        self.right_pixmap = QPixmap(GO_RIGHT_PIC).scaledToWidth(
-            self.walking_man.width())
+    # def _init_pixmaps(self):
+    #     self.left_pixmap = QPixmap(GO_LEFT_PIC).scaledToWidth(
+    #         self.walking_man.width())
+    #     self.right_pixmap = QPixmap(GO_RIGHT_PIC).scaledToWidth(
+    #         self.walking_man.width())
 
-    def set_go_left(self):
-        self.walking_man.setPixmap(self.left_pixmap)
+    # def set_go_left(self):
+    #     self.walking_man.setPixmap(self.left_pixmap)
 
-    def set_go_right(self):
-        self.walking_man.setPixmap(self.right_pixmap)
+    # def set_go_right(self):
+    #     self.walking_man.setPixmap(self.right_pixmap)
 
     def change_sensor_list(self):
         for s in SENSORS:
@@ -220,8 +270,9 @@ class MainWindow(QMainWindow):
                     single_item.setText(single_item.text, **legendLabelStyle)
 
     def _draw_main_window(self):
+        self.goon.emit()
         self.show()
-        self.legend = self.raw_data.addLegend([50, 20], (480, 10))
+        self.legend = self.raw_data.addLegend([50, 15], (520, 2))
         for sensor in sorted(self.sensors):
             name = sensor[:2] if sensor == 'unknown' else sensor
             self.curves[sensor] = self.raw_data.plot(
@@ -230,8 +281,8 @@ class MainWindow(QMainWindow):
 
         self.set_legend_style()
 
-        self._init_pixmaps()
-        self.set_go_left()
+        # self._init_pixmaps()
+        # self.set_go_left()
         self.raw_data.setDownsampling(mode='peak')
         self.raw_data.setClipToView(True)
         self.raw_data.autoRange()
@@ -266,23 +317,26 @@ class MainWindow(QMainWindow):
         for key in packet.sensors:
             self.data[key.lower()][self.ptr] = packet.sensors[key]['value']
         self.ptr += 1
-        print("sleep in read_1")
+        self.set_range(packet)
+        self.set_connection_levels(packet)
+        self.set_battery(packet.battery)
         await asyncio.sleep(self.update_interval)
-        print("end sleep in read_1")
+        await self.check_buffer()
+
         while self.device.running:
             print("got data", datetime.datetime.now())
             packet = await self.device.data_to_send.get()
             for key in packet.sensors:
                 self.data[key.lower()][self.ptr] = packet.sensors[key]['value']
             self.ptr += 1
-            print("sleep in read_2")
+            self.set_connection_levels(packet)
+            self.set_battery(packet.battery)
             await asyncio.sleep(self.update_interval)
             await self.check_buffer()
-            print("end sleep in read_2")
 
     def set_range(self, packet):
         min_ = 0
-        max_ = 0
+        max_ = 100
         for key in packet.sensors:
             if packet.sensors[key]['value'] < min_:
                 min_ = packet.sensors[key]['value']

@@ -43,6 +43,7 @@ class Login():
 
 class LoginDialog(QDialog, Login):
     logged = pyqtSignal()
+    close_only = pyqtSignal()
 
     def __init__(self, current_user):
         QDialog.__init__(self)
@@ -53,6 +54,11 @@ class LoginDialog(QDialog, Login):
     def display_error(self, error="DEFAULT ERROR MSG"):
         QMessageBox.critical(self, "Error", error)
 
+    def closeEvent(self, event):
+        """interrupt everything if dialog was closed"""
+        self.close_only.emit()
+        event.accept()
+
     def on_start_button(self):
         """start_button singal catched"""
         username = self.login_input.text()
@@ -60,7 +66,6 @@ class LoginDialog(QDialog, Login):
         create_account = self.new_user_checkbox.isChecked()
         if create_account:
             # create account
-
             if not self.sign_up(username, password):
                 return
 

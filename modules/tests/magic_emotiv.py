@@ -70,7 +70,7 @@ class MagicEmotiv:
             print(self.data_to_send.qsize())
             s = {}
             for shift, sensor in enumerate(sorted(sensor_bits, reverse=True)):
-                s[sensor] = {'quality': 0.0}
+                s[sensor] = {'quality': 1.0}
                 s[sensor]['value'] = np.random.normal() + shift * 5
 
             packet = MagicPacket(
