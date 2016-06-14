@@ -3,20 +3,20 @@ from asyncio import Queue
 import numpy as np
 
 sensor_bits = {
-    'F3': [],
-    'FC5': [],
-    'AF3': [],
-    'F7': [],
-    'T7': [],
-    'P7': [],
-    'O1': [],
-    'O2': [],
-    'P8': [],
-    'T8': [],
-    'F8': [],
-    'AF4': [],
-    'FC6': [],
-    'F4': [],
+    'F3': {'value': 7},
+    'FC5': {'value': 10},
+    'AF3': {'value': 10},
+    'F7': {'value': 4},
+    'T7': {'value': 9},
+    'P7': {'value': 7},
+    'O1': {'value': 9},
+    'O2': {'value': 11},
+    'P8': {'value': 12},
+    'T8': {'value': 6},
+    'F8': {'value': 9},
+    'AF4': {'value': 7},
+    'FC6': {'value': 12},
+    'F4': {'value': 3},
 }
 
 
@@ -70,7 +70,7 @@ class MagicEmotiv:
             print(self.data_to_send.qsize())
             s = {}
             for shift, sensor in enumerate(sorted(sensor_bits, reverse=True)):
-                s[sensor] = {'quality': 1.0}
+                s[sensor] = {'quality': sensor_bits[sensor]['value']}
                 s[sensor]['value'] = np.random.normal() + shift * 5
 
             packet = MagicPacket(

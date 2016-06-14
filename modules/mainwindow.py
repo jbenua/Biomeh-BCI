@@ -23,11 +23,9 @@ MAINWINDOW_UI = './ui/main_window.ui'
 QUALITY = {
     0: 'grey',
     1: 'red',
-    2: 'yellow',
-    3: 'green',
-    4: 'blue',
-    5: 'black',
-    6: 'orange'
+    2: 'orange',
+    3: 'yellow',
+    4: 'green',
 }
 
 SENSORS = {
@@ -204,7 +202,7 @@ class MainWindow(QMainWindow):
                 ss = '''
                 border: 1px solid black;
                 border-radius: 15px;
-                background: {};'''.format(QUALITY[int(has_value / 2)])
+                background: {};'''.format(QUALITY[int(has_value / 3)])
                 sensor_circle.setStyleSheet(ss)
 
     def set_filter_vals(self):
