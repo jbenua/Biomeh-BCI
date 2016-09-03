@@ -22,7 +22,8 @@ def run(loop, main_window):
             asyncio.ensure_future(main_window.device.read_data()),
             asyncio.ensure_future(main_window.device.update_console()),
             asyncio.ensure_future(main_window.read_data()),
-            asyncio.ensure_future(main_window.update_curves())
+            asyncio.ensure_future(main_window.update_curves()),
+            asyncio.ensure_future(main_window.additional_work())
         ]
         finished, pending = loop.run_until_complete(
             asyncio.wait(loop_tasks))

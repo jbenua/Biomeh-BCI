@@ -7,9 +7,14 @@ UI = './ui/training.ui'
 
 
 class TrainingDialog(QDialog):
-    def __init__(self):
+    def __init__(self, parent):
+        self._buffer = []
         QDialog.__init__(self)
         uic.loadUi(UI, self)
+        self.parent = parent
+        self.parent.to_save = None
+        self.begin = 0
+        self.end = 0
         self.start_button.clicked.connect(self.on_start_button)
         self.stop_button.clicked.connect(self.on_stop_button)
         self.save_button.clicked.connect(self.on_ok)
@@ -29,23 +34,26 @@ class TrainingDialog(QDialog):
         if allowed:
             self.start_button.setEnabled(False)
             self.stop_button.setEnabled(True)
-            # start recording data
+            self.begin = self.parent.ptr
 
     def on_stop_button(self):
         """stop button signal catched"""
         self.is_first_try = False
         self.stop_button.setEnabled(False)
         self.start_button.setEnabled(True)
-        # stop recording data
+        self.end = self.parent.ptr
 
     def on_ok(self):
         """ok button clicked"""
         if not self.title_input.text():
             QMessageBox.critical(self, "Error", 'Title is required')
         else:
-            pass
-            # save data
-            # close dialog
+            self.parent.to_save = {
+                'title': self.title_input.text(),
+                'begin': self.begin,
+                'end': self.end
+            }
+            self.close()
 
     def on_cancel(self):
         """cancel button clicked"""

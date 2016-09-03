@@ -7,7 +7,6 @@ from pathlib import Path
 from PyQt5 import uic
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QMainWindow
-# from PyQt5.QtGui import QPixmap
 
 from .login import LoginDialog
 from .training import TrainingDialog
@@ -15,10 +14,7 @@ from .emotiv import Emotiv
 from .tests.magic_emotiv import MagicEmotiv
 
 MAINWINDOW_UI = './ui/main_window.ui'
-# GO_LEFT_PIC = './img/go_left.png'
-# GO_RIGHT_PIC = './img/go_right.png'
 
-# TODO: add curve- and timeout- and buffer size selectors
 
 QUALITY = {
     0: 'grey',
@@ -128,6 +124,7 @@ class MainWindow(QMainWindow):
         self.login_dialog.logged.connect(self._draw_main_window)
         self.login_dialog.close_only.connect(self.interrupt)
         self.loop.run_until_complete(self._log_in())
+        self.predict = False
 
     def interrupt(self):
         """user didn't log in"""
@@ -136,7 +133,11 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         # save logs
         if len(sys.argv) > 2:
-            type_ = "_" + sys.argv[2]
+            if sys.argv[2] == 'no_logs':
+                event.accept()
+                return
+            else:
+                type_ = "_" + sys.argv[2]
         else:
             type_ = ''
         path = str(Path('.').resolve())
@@ -151,10 +152,44 @@ class MainWindow(QMainWindow):
             file.write('}')
         event.accept()
 
+    def set_classify(self, val):
+        self.classify.setChecked(val)
+        self.predict = val
+
+    def check_classify(self):
+        self.predict = self.classify.isChecked()
+        return self.predict
+
     def train(self):
-        training_dialog = TrainingDialog()
+        state = self.check_classify()
+        self.set_classify(False)
+        training_dialog = TrainingDialog(self)
         training_dialog.show()
         training_dialog.exec_()
+        if self.to_save:
+            raws = self.user.put_raws({
+                sensor: self.data[sensor][
+                    self.to_save['begin']:self.to_save['end']]
+                for sensor in self.data})
+            self.user.add_tag(self.to_save['title'], raws)
+            self.user.update_prev_data()
+            print('Tag %s saved' % self.to_save['title'])
+        self.set_classify(state)
+
+    def set_tags(self, tags):
+        self.label.setText(','.join(tags))
+
+    async def additional_work(self):
+        while self.device.running:
+            if self.predict:
+                ptr = self.ptr
+                tags = self.user.detect([
+                    self.data[sensor][ptr] for sensor in [
+                        'f3', 'fc6', 'p7', 't8', 'f7', 'f8', 't7', 'p8',
+                        'af4', 'f4', 'af3', 'o2', 'o1', 'fc5', 'x',
+                        'y', 'unknown']])
+                self.set_tags(tags)
+            await asyncio.sleep(self.update_interval)
 
     async def setup_device(self):
         """Connect device to ui"""
@@ -197,7 +232,6 @@ class MainWindow(QMainWindow):
             has_value = packet.sensors[sensor].get('quality', None)
             if has_value:
 
-                print("QUALITY", has_value, QUALITY.get(int(has_value), 4))
                 sensor_circle = getattr(self, sensor)
                 ss = '''
                 border: 1px solid black;
@@ -229,18 +263,6 @@ class MainWindow(QMainWindow):
     async def _log_in(self):
         self.login_dialog.show()
         self.login_dialog.exec_()
-
-    # def _init_pixmaps(self):
-    #     self.left_pixmap = QPixmap(GO_LEFT_PIC).scaledToWidth(
-    #         self.walking_man.width())
-    #     self.right_pixmap = QPixmap(GO_RIGHT_PIC).scaledToWidth(
-    #         self.walking_man.width())
-
-    # def set_go_left(self):
-    #     self.walking_man.setPixmap(self.left_pixmap)
-
-    # def set_go_right(self):
-    #     self.walking_man.setPixmap(self.right_pixmap)
 
     def change_sensor_list(self):
         for s in SENSORS:
@@ -278,9 +300,6 @@ class MainWindow(QMainWindow):
                 name=name.upper())
 
         self.set_legend_style()
-
-        # self._init_pixmaps()
-        # self.set_go_left()
         self.raw_data.setDownsampling(mode='peak')
         self.raw_data.setClipToView(True)
         self.raw_data.autoRange()
@@ -289,20 +308,17 @@ class MainWindow(QMainWindow):
 
     async def update_curves(self):
         ptr = -1
-        print("in update curves", self.device.running)
         while self.device.running:
-            print("update_cureves, running", self.device.running)
+
+            self.check_classify()
             if self.ptr != ptr:
                 ptr = self.ptr
-                print(ptr)
                 for sensor in self.curves:
                     self.curves[sensor].setData(self.data[sensor][:ptr])
                 self.raw_data.setXRange(ptr - 100, ptr + 8)
             await asyncio.sleep(self.update_interval)
-        print("update_curves finished")
 
     async def check_buffer(self):
-        print("check_buffer")
         if self.ptr >= self.data[self.sensors[0]].shape[0]:
             print("need more space")
             for sensor in self.data:
@@ -322,7 +338,6 @@ class MainWindow(QMainWindow):
         await self.check_buffer()
 
         while self.device.running:
-            print("got data", datetime.datetime.now())
             packet = await self.device.data_to_send.get()
             for key in packet.sensors:
                 self.data[key.lower()][self.ptr] = packet.sensors[key]['value']

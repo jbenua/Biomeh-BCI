@@ -28,18 +28,36 @@ class User:
         print("previous tags: ", self.prev_tags)
         print("previous sessions: ", self.prev_data)
 
-    # def read_data(self):
-        # try:
-        #     a = Emotiv()
-        #     self.current_session_raw = a.setupWin()
-        # a.device.close()
-        #     self.get_raw_id()
-        #     return True
-        # except Exception as err:
-        #     print("Error reading raw data! ")
-        #     for t in err.args:
-        #         print(t)
-        #     return False
+    def add_tag(self, tag_name, raw_ids):
+        tag_id = tags.create(tag=tag_name)
+        for id_ in raw_ids:
+            sessions.create(
+                tag_id=tag_id,
+                raw_id=id_,
+                user_id=self.userid)
+
+    def put_raws(self, raws):
+        ids = []
+        for index in range(len(raws['f3'])):
+            id_ = raw.create(f3=raws['f3'][index],
+                             fc6=raws['fc6'][index],
+                             p7=raws['p7'][index],
+                             t8=raws['t8'][index],
+                             f7=raws['f7'][index],
+                             f8=raws['t8'][index],
+                             t7=raws['t7'][index],
+                             p8=raws['p8'][index],
+                             af4=raws['af4'][index],
+                             f4=raws['f4'][index],
+                             af3=raws['af3'][index],
+                             o2=raws['o2'][index],
+                             o1=raws['o1'][index],
+                             fc5=raws['fc5'][index],
+                             x=raws['x'][index],
+                             y=raws['y'][index],
+                             unknown=raws['unknown'][index])
+            ids.append(id_)
+        return ids
 
     def get_raw_id(self, this_raw):
         try:
@@ -82,69 +100,44 @@ class User:
         finally:
             self.current_session_id = res.id
 
-    def fill_info(self, name, pswd):
+    def update_prev_data(self):
+        self.prev_tags = []
+        self.prev_data = []
+
         self.db.connect()
-        self.username = name
-        this_user = users.get(
-            users.username == self.username, users.passwd == pswd)
-        self.userid = this_user.id
         try:
             entries = sessions.select(
                 sessions.tag_id, sessions.raw_id).where(
-                    sessions.user_id == self.userid)
-            print(entries)
+                sessions.user_id == self.userid)
             for entry in entries:
                 get_raw = raw.select().where(
                     raw.id == entry.raw_id)
                 for item in get_raw:
-                    print(item)
                     self.prev_data.append([
                         item.f3, item.fc6, item.p7, item.t8,
                         item.f7, item.f8, item.t7, item.p8,
                         item.af4, item.f4, item.af3, item.o2,
                         item.o1, item.fc5, item.x, item.y,
                         item.unknown])
-                self.prev_tags.append(entry.tag_id)
+                self.prev_tags.append(tags.get(id=entry.tag_id).tag)
         except sessions.DoesNotExist:
             print("no previous data found")
         finally:
             self.db.close()
-        self.classifier = svm.SVC()
 
-    def detect(self):
+        self.classifier = svm.SVC()  # maybe change method ?
         self.classifier.fit(self.prev_data, self.prev_tags)
-        # test
-        # self.current_session_raw = [
-        #     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-        # self.get_raw_id()
-        #
-        if self.current_session_raw and len(set(self.prev_tags)) > 1:
-            # maybe change the method
-            a = self.classifier.predict(self.current_session_raw)
-            temp = []
-            self.db.connect()
-            for i in a:
-                try:
-                    get_tags = tags.get(tags.id == i).tag
-                    temp.append(get_tags)
-                except tags.DoesNotExist:
-                    print('nothing was found')
-            #
-            #
-            # tests
-            # mach = scikit_test.Learn().test(
-            #     self.prev_data, self.prev_tags, self.current_session_raw)
-            # mach_out = []
-            # for i in mach:
-            #     try:
-            #         get_tags = tags.get(tags.id == i).tag
-            #         mach_out.append(get_tags)
-            #     except tags.DoesNotExist:
-            #         print('nothing was found')
-            # print("svm, nn, tree: ", mach_out)
-            # #
-            #
-            self.db.close()
-            return temp
-        else:
+
+    def fill_info(self, name, pswd):
+        self.db.connect()
+        self.username = name
+        this_user = users.get(
+            users.username == self.username, users.passwd == pswd)
+        self.userid = this_user.id
+        self.db.close()
+        self.update_prev_data()
+
+    def detect(self, this_raw):
+        if len(set(self.prev_tags)) <= 1:
             return ['Lack of data']
+        return self.classifier.predict([this_raw])
