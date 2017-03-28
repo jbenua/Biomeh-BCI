@@ -4,8 +4,6 @@ from Crypto import Random
 import asyncio
 from asyncio import Queue, sleep
 from subprocess import check_output
-import datetime
-
 
 sensor_bits = {
     'F3': [10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7],
@@ -358,7 +356,7 @@ class Emotiv:
 
     def __init__(
             self, display_output=False, serial_number="",
-            is_research=False, filter_hz=25, pointer=0):
+            is_research=False, filter_hz=25):
         """
         Sets up initial values.
         """
@@ -369,7 +367,6 @@ class Emotiv:
         self.display_output = display_output
         self.poll_interval = 1 / filter_hz
         self.is_research = is_research
-        self.ptr = pointer
         self.sensors = {
             'F3': {'value': 0, 'quality': 0},
             'FC6': {'value': 0, 'quality': 0},
@@ -421,7 +418,6 @@ class Emotiv:
                             self.packets.put_nowait(EmotivPacket(data))
                         else:
                             tasks.put_nowait(data)
-                    self.ptr += 1
                     await self.process_tasks()
                     await sleep(self.poll_interval)
                 except KeyboardInterrupt:

@@ -1,11 +1,12 @@
-from PyQt5 import uic
-from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtGui import QPixmap
-# from PyQt5.QtCore import QObject, pyqtSignal
 import numpy as np
 import pyqtgraph as pg
 import sys
 import asyncio
+import datetime
+from pathlib import Path
+from PyQt5 import uic
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtWidgets import QMainWindow
 
 from .login import LoginDialog
 from .training import TrainingDialog
@@ -13,11 +14,15 @@ from .emotiv import Emotiv
 from .tests.magic_emotiv import MagicEmotiv
 
 MAINWINDOW_UI = './ui/main_window.ui'
-GO_LEFT_PIC = './img/go_left.png'
-GO_RIGHT_PIC = './img/go_right.png'
 
-# TODO: add curve- and timeout- and buffer size selectors
 
+QUALITY = {
+    0: 'grey',
+    1: 'red',
+    2: 'orange',
+    3: 'yellow',
+    4: 'green',
+}
 
 SENSORS = {
     'f3': {
@@ -92,6 +97,9 @@ SENSORS = {
 
 
 class MainWindow(QMainWindow):
+    should_close = pyqtSignal()
+    goon = pyqtSignal()
+
     def __init__(self, current_user, loop, filter_hz=0.5):
         self.sensors = list(SENSORS.keys())
         self.curves = {}
@@ -106,27 +114,91 @@ class MainWindow(QMainWindow):
         uic.loadUi(MAINWINDOW_UI, self)
 
         self.train_button.clicked.connect(self.train)
+        if self.filter_hz != 0.5:
+            self.set_filter_vals()
         self.filter_apply_button.clicked.connect(self.change_filter)
         self.filter_slider.sliderPressed.connect(self.set_echo_filter)
         self.filter_slider.sliderReleased.connect(self.unset_echo_filter)
         self.filter_value_edit.textEdited.connect(self.update_slider_val)
         self.change_sensors_button.clicked.connect(self.change_sensor_list)
         self.login_dialog.logged.connect(self._draw_main_window)
+        self.login_dialog.close_only.connect(self.interrupt)
         self.loop.run_until_complete(self._log_in())
+        self.predict = False
+
+    def interrupt(self):
+        """user didn't log in"""
+        self.should_close.emit()
+
+    def closeEvent(self, event):
+        # save logs
+        if len(sys.argv) > 2:
+            if sys.argv[2] == 'no_logs':
+                event.accept()
+                return
+            else:
+                type_ = "_" + sys.argv[2]
+        else:
+            type_ = ''
+        path = str(Path('.').resolve())
+        filename = "{path}/logs/{date}_{user}{type_}.py".format(
+            path=path, date=str(datetime.datetime.now()),
+            user=self.user.username, type_=type_)
+        with open(filename, 'a') as file:
+            file.write('data = {')
+            for sensor in self.data:
+                file.write("'{}': [{}],\n".format(sensor, ', '.join([
+                    '%.2f' % float(val) for val in self.data[sensor]])))
+            file.write('}')
+        event.accept()
+
+    def set_classify(self, val):
+        self.classify.setChecked(val)
+        self.predict = val
+
+    def check_classify(self):
+        self.predict = self.classify.isChecked()
+        return self.predict
 
     def train(self):
-        training_dialog = TrainingDialog()
+        state = self.check_classify()
+        self.set_classify(False)
+        training_dialog = TrainingDialog(self)
         training_dialog.show()
         training_dialog.exec_()
+        if self.to_save:
+            raws = self.user.put_raws({
+                sensor: self.data[sensor][
+                    self.to_save['begin']:self.to_save['end']]
+                for sensor in self.data})
+            self.user.add_tag(self.to_save['title'], raws)
+            self.user.update_prev_data()
+            print('Tag %s saved' % self.to_save['title'])
+        self.set_classify(state)
+
+    def set_tags(self, tags):
+        self.label.setText(','.join(tags))
+
+    async def additional_work(self):
+        while self.device.running:
+            if self.predict:
+                ptr = self.ptr
+                tags = self.user.detect([
+                    self.data[sensor][ptr] for sensor in [
+                        'f3', 'fc6', 'p7', 't8', 'f7', 'f8', 't7', 'p8',
+                        'af4', 'f4', 'af3', 'o2', 'o1', 'fc5', 'x',
+                        'y', 'unknown']])
+                self.set_tags(tags)
+            await asyncio.sleep(self.update_interval)
 
     async def setup_device(self):
         """Connect device to ui"""
         self.ptr = 0
         if len(sys.argv) > 1:
-            device = MagicEmotiv(self.ptr, self.filter_hz)
+            device = MagicEmotiv(filter_hz=self.filter_hz)
         else:
             device = Emotiv(
-                display_output=True, filter=self.filter_hz, pointer=self.ptr)
+                display_output=True, filter_hz=self.filter_hz)
         await device.setup()
         device.running = True
         self.set_battery(device.battery)
@@ -141,12 +213,10 @@ class MainWindow(QMainWindow):
 
     def change_filter(self):
         """Change a filter for Emotiv"""
-        try:
-            new_val = float(self.filter_value_edit.text())
-            self.update_interval = 1 / new_val
-            self.device.set_filter(new_val)
-        except Exception as e:
-            print(e)
+        print("setting new filter...")
+        new_val = float(self.filter_value_edit.text())
+        self.update_interval = 1 / new_val
+        self.device.set_filter(new_val)
 
     def set_battery(self, level):
         self.battery_level.setText(str(level))
@@ -156,6 +226,23 @@ class MainWindow(QMainWindow):
             self.battery_level.setStyleSheet('color: orange')
         else:
             self.battery_level.setStyleSheet('color: red')
+
+    def set_connection_levels(self, packet):
+        for sensor in packet.sensors:
+            has_value = packet.sensors[sensor].get('quality', None)
+            if has_value:
+
+                sensor_circle = getattr(self, sensor)
+                ss = '''
+                border: 1px solid black;
+                border-radius: 15px;
+                background: {};'''.format(QUALITY[int(has_value / 3)])
+                sensor_circle.setStyleSheet(ss)
+
+    def set_filter_vals(self):
+        val = float(self.filter_hz)
+        self.filter_slider.setValue(val)
+        self.filter_value_edit.setText(str(val))
 
     def unset_echo_filter(self):
         """Display real-time value change in input"""
@@ -174,22 +261,8 @@ class MainWindow(QMainWindow):
         self.filter_value_edit.setText(str(self.filter_slider.value() / 2))
 
     async def _log_in(self):
-        # QObject.connect(
-        #     self.login_dialog, SIGNAL("logged()"), self._draw_main_window)
         self.login_dialog.show()
         self.login_dialog.exec_()
-
-    def _init_pixmaps(self):
-        self.left_pixmap = QPixmap(GO_LEFT_PIC).scaledToWidth(
-            self.walking_man.width())
-        self.right_pixmap = QPixmap(GO_RIGHT_PIC).scaledToWidth(
-            self.walking_man.width())
-
-    def set_go_left(self):
-        self.walking_man.setPixmap(self.left_pixmap)
-
-    def set_go_right(self):
-        self.walking_man.setPixmap(self.right_pixmap)
 
     def change_sensor_list(self):
         for s in SENSORS:
@@ -217,8 +290,9 @@ class MainWindow(QMainWindow):
                     single_item.setText(single_item.text, **legendLabelStyle)
 
     def _draw_main_window(self):
+        self.goon.emit()
         self.show()
-        self.legend = self.raw_data.addLegend([50, 20], (480, 10))
+        self.legend = self.raw_data.addLegend([50, 15], (520, 2))
         for sensor in sorted(self.sensors):
             name = sensor[:2] if sensor == 'unknown' else sensor
             self.curves[sensor] = self.raw_data.plot(
@@ -226,9 +300,6 @@ class MainWindow(QMainWindow):
                 name=name.upper())
 
         self.set_legend_style()
-
-        self._init_pixmaps()
-        self.set_go_left()
         self.raw_data.setDownsampling(mode='peak')
         self.raw_data.setClipToView(True)
         self.raw_data.autoRange()
@@ -236,21 +307,19 @@ class MainWindow(QMainWindow):
         self.raw_data.setYRange(-5, 85)
 
     async def update_curves(self):
-
         ptr = -1
         while self.device.running:
+
+            self.check_classify()
             if self.ptr != ptr:
                 ptr = self.ptr
-                print(ptr)
                 for sensor in self.curves:
                     self.curves[sensor].setData(self.data[sensor][:ptr])
                 self.raw_data.setXRange(ptr - 100, ptr + 8)
-                await asyncio.sleep(self.update_interval)
+            await asyncio.sleep(self.update_interval)
 
     async def check_buffer(self):
-        print("check_buffer")
         if self.ptr >= self.data[self.sensors[0]].shape[0]:
-
             print("need more space")
             for sensor in self.data:
                 tmp = self.data[sensor]
@@ -261,18 +330,26 @@ class MainWindow(QMainWindow):
         packet = await self.device.data_to_send.get()
         for key in packet.sensors:
             self.data[key.lower()][self.ptr] = packet.sensors[key]['value']
-        self.set_range(packet)
         self.ptr += 1
+        self.set_range(packet)
+        self.set_connection_levels(packet)
+        self.set_battery(packet.battery)
+        await asyncio.sleep(self.update_interval)
+        await self.check_buffer()
+
         while self.device.running:
             packet = await self.device.data_to_send.get()
             for key in packet.sensors:
                 self.data[key.lower()][self.ptr] = packet.sensors[key]['value']
             self.ptr += 1
+            self.set_connection_levels(packet)
+            self.set_battery(packet.battery)
+            await asyncio.sleep(self.update_interval)
             await self.check_buffer()
 
     def set_range(self, packet):
         min_ = 0
-        max_ = 0
+        max_ = 100
         for key in packet.sensors:
             if packet.sensors[key]['value'] < min_:
                 min_ = packet.sensors[key]['value']

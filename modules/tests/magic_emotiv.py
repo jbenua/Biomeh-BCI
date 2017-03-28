@@ -1,23 +1,22 @@
-from unittest.mock import MagicMock
 import asyncio
 from asyncio import Queue
 import numpy as np
 
 sensor_bits = {
-    'F3': [],
-    'FC5': [],
-    'AF3': [],
-    'F7': [],
-    'T7': [],
-    'P7': [],
-    'O1': [],
-    'O2': [],
-    'P8': [],
-    'T8': [],
-    'F8': [],
-    'AF4': [],
-    'FC6': [],
-    'F4': [],
+    'F3': {'value': 7},
+    'FC5': {'value': 10},
+    'AF3': {'value': 10},
+    'F7': {'value': 4},
+    'T7': {'value': 9},
+    'P7': {'value': 7},
+    'O1': {'value': 9},
+    'O2': {'value': 11},
+    'P8': {'value': 12},
+    'T8': {'value': 6},
+    'F8': {'value': 9},
+    'AF4': {'value': 7},
+    'FC6': {'value': 12},
+    'F4': {'value': 3},
 }
 
 
@@ -51,12 +50,12 @@ class MagicPacket:
 
 
 class MagicEmotiv:
-    def __init__(self, ptr, upd_interval):
+    def __init__(self, filter_hz=25):
         self.data_to_send = Queue()
         self.battery = 40
         self.packets = Queue()
-        self.ptr = ptr
-        self.poll_interval = upd_interval
+        self.poll_interval = 1 / filter_hz
+        self.running = True
 
     def set_filter(self, value):
         self.poll_interval = 1 / value
@@ -65,10 +64,13 @@ class MagicEmotiv:
         print("creating magic emotiv...")
 
     async def read_data(self):
+        print("magic: running", self.running)
         while self.running:
+            print("magic: running", self.running)
+            print(self.data_to_send.qsize())
             s = {}
             for shift, sensor in enumerate(sorted(sensor_bits, reverse=True)):
-                s[sensor] = {'quality': 0.0}
+                s[sensor] = {'quality': sensor_bits[sensor]['value']}
                 s[sensor]['value'] = np.random.normal() + shift * 5
 
             packet = MagicPacket(
@@ -77,7 +79,6 @@ class MagicEmotiv:
                 s, False)
             self.packets.put_nowait(packet)
             self.data_to_send.put_nowait(packet)
-            self.ptr += 1
             await asyncio.sleep(self.poll_interval)
 
     async def update_console(self):
@@ -85,6 +86,7 @@ class MagicEmotiv:
             packet = await self.packets.get()
             print(packet)
             await asyncio.sleep(self.poll_interval)
+
 
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
