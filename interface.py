@@ -35,6 +35,7 @@ def run(loop, main_window):
     main_window.device.close()
     sys.exit(app.exec_())
 
+
 if __name__ == "__main__":
     user = User(db)
     app = QApplication(sys.argv)

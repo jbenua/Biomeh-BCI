@@ -1,7 +1,4 @@
-from .emotiv import Emotiv
 from sklearn import svm
-import scikit_test
-
 from .db_model import raw, users, sessions, tags
 
 

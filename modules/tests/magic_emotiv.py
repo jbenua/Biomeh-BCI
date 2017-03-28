@@ -87,6 +87,7 @@ class MagicEmotiv:
             print(packet)
             await asyncio.sleep(self.poll_interval)
 
+
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     a = MagicEmotiv()
